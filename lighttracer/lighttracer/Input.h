@@ -6,6 +6,6 @@ struct InOut
 	
 	std::vector<glm::vec3> tissue;
 	std::vector<glm::vec3> absorption;
-	std::vector<glm::vec3> transmittance;
+	std::vector<Photonstruct> transmittance;
 
 };

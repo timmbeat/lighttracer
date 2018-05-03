@@ -24,7 +24,12 @@ struct renderoptions
 struct dviwedi
 {
 	double alpha = 0.959;
-	double highv0 = sqrt(3 * (1 - alpha)) * (1 - 2 / 5*(1 - alpha) - 12 / 175 * pow((1 - alpha), 2) - 2 / 125 * pow((1 - alpha), 3) - 166 / 67375 * pow((1 - alpha), 4));
-	double lowv0 = 1 - 2 * exp(-2 / alpha)*(1 + ((4 - alpha) / alpha)*exp(-2 / alpha) + ((24 - 12 * alpha + pow(alpha, 2)) / pow(alpha, 2))*exp(-4 / alpha) + 
-		((512 - 384 * alpha + 72 * pow(alpha, 2) - 3 * pow(alpha, 3)) / pow(alpha, 3))*exp(-6 / alpha));
+	double alphaoneminus = 1 - alpha;
+	double potalphaoneminus = alphaoneminus * alphaoneminus;
+	double tripalphaoneminus = potalphaoneminus * alphaoneminus;
+	double pot_aplha = alpha * alpha;
+	double trip_alpha = pot_aplha * alpha;
+	double highv0 = sqrt(3 * alphaoneminus) * (1 - (2 / 5)*alphaoneminus - 12 / 175 * potalphaoneminus - (2 / 125) * tripalphaoneminus + (166 / 67375) * tripalphaoneminus * alphaoneminus);
+	double lowv0 = 1 - 2 * exp(-2 / alpha)*(1 + ((4 - alpha) / alpha)*exp(-2 / alpha) + ((24 - 12 * alpha + pot_aplha) / pot_aplha)*exp(-4 / alpha) + 
+		((512 - 384 * alpha + 72 * pot_aplha - 3 * trip_alpha) / 3*trip_alpha)*exp(-6 / alpha));
 }dvi;
