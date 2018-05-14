@@ -4,8 +4,8 @@
 
 struct Layer
 {
-	Layer(double const refrac, double const absorption, double const scattering, double const anisotropy): 
-	refrac(refrac), absorption(absorption), scattering(scattering), anisotropy(anisotropy)
+	Layer(double const refrac, double const absorption, double const scattering, double const anisotropy, double const v0): 
+	refrac(refrac), absorption(absorption), scattering(scattering), anisotropy(anisotropy),  v0(v0)
 	{
 	}
 
@@ -13,4 +13,5 @@ struct Layer
 	double absorption;
 	double scattering;
 	double anisotropy;
+	double v0;
 };
