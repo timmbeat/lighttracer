@@ -3,17 +3,19 @@
 #include <glm.hpp>
 #include <sstream>
 
-struct Photonstruct
+struct photonstruct
 {
+	photonstruct(double const weight, bool const dead, double const step) :
+		position(glm::dvec3(0, 0, 0)), direction(glm::dvec3(0, 0, 1)), weight(weight), dead(dead), step(step), sleft(0)
+	{
+	}
 	glm::dvec3 position;
-	glm::dvec3 directions;
+	glm::dvec3 direction;
 	double weight;
 	bool dead;
 	//For now unnessary..
-	short layer;
 	double step;
-	double stepleft;
-
+	double sleft;
 	std::string to_string() const
 	{
 		std::stringstream output;

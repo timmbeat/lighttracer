@@ -2,11 +2,12 @@
 
 #include <glm.hpp>
 
-struct Layer
+struct layer
 {
-	Layer(double const refrac, double const absorption, double const scattering, double const anisotropy, double const v0): 
+	layer(double const refrac, double const absorption, double const scattering, double const anisotropy, double const v0): 
 	refrac(refrac), absorption(absorption), scattering(scattering), anisotropy(anisotropy),  v0(v0)
 	{
+		reflec = reflection(refrac);
 	}
 
 	double refrac;
@@ -14,4 +15,12 @@ struct Layer
 	double scattering;
 	double anisotropy;
 	double v0;
+	double reflec;
+
+private:
+	static double reflection(double const refrac)
+	{
+		return ((1 - refrac)*(1 - refrac)) /
+			((1 + refrac)*(1 + refrac));
+	}
 };

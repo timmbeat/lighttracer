@@ -2,11 +2,12 @@
 #include <glm.hpp>
 #include <vector>
 #include "bucket.h"
-struct InOut
+struct output
 {
-	
-	std::vector<glm::vec3> tissue;
-	std::vector<glm::vec3> absorption;
-	std::vector<Photonstruct> transmittance;
+	static const int ARRSIZE = 100;
+	double ref[ARRSIZE][ARRSIZE];
+	double delr = 0.1;
+	double dela = 1;
+	std::vector<bucket> absorption;
 	std::vector<bucket> trans;
 };
