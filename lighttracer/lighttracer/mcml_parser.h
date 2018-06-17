@@ -50,7 +50,7 @@ namespace mcml
 		{
 			return filename_;
 		}
-		std::vector<std::vector<Real>> get_ra() const;
+		std::vector<Real> get_ra() const;
 		const std::vector<LayerInfo>& GetLayers() const
 		{
 			return layers_;
@@ -64,9 +64,11 @@ namespace mcml
 			return etaBelow_;
 		}
 
-		std::size_t get_numr();
-		std::size_t get_numa();
-
+		std::size_t get_numr() const;
+		std::size_t get_numa() const;
+		std::size_t get_numphotons() const;
+		double get_dr_() const;
+		double get_dz_() const;
 		// const std::vector<double>& GetRadiusValues() const { return rValues_; }
 		// const std::vector<double>& GetRadialReflectionProfile() const { return rProfileR_; }
 		// const std::vector<double>& GetRadialTransmissionProfile() const { return tProfileR_; }

@@ -20,7 +20,8 @@ struct layer
 private:
 	static double reflection(double const refrac)
 	{
-		return ((1 - refrac)*(1 - refrac)) /
-			((1 + refrac)*(1 + refrac));
+
+		auto const tmp = (1 - refrac)/(1+refrac);
+		return tmp * tmp;
 	}
 };

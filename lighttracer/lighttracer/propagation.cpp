@@ -11,16 +11,17 @@ std::uniform_real_distribution<double> dis(0.0, 1.0);
 const double m_pi = 3.14159265358979323846;
 std::ofstream fout("logfile.txt", std::ofstream::app);
 std::ofstream ccout("output.csv", std::ofstream::app);
-
-extern struct dviwedi dvi;
-extern struct renderoptions render;
-
+int counthits = 0;
+int countfunc = 0;
+struct dviwedi dvi;
+struct renderoptions render;
 propagation::~propagation()
 = default;
 //triple checkt
 void propagation::cal_absorption(photonstruct& photon) const
 {
 	auto const tmp = photon.weight * mat_.matproperties->absorption / (mat_.matproperties->absorption + mat_.matproperties->scattering);
+	
 	photon.weight -= tmp;
 }
 
@@ -34,7 +35,7 @@ double propagation::cal_stepsize(photonstruct& photon) const
 
 	}
 	while (ran <= 0.0);
-	auto const ret = -log(dis(gen)) / (mat_.matproperties->absorption + mat_.matproperties->scattering);
+	auto const ret = -log(ran) / (mat_.matproperties->absorption + mat_.matproperties->scattering);
 
 	return ret;
 }
@@ -162,14 +163,20 @@ bool propagation::is_hit(photonstruct& photon)
 	}
 	else
 	{
-		photon.step = photon.sleft;
+		photon.step = photon.sleft / (mat_.matproperties->absorption + mat_.matproperties->scattering);
 		photon.sleft = 0.0;
 	}
 
 
 	if (photon.direction.z < 0.0)
 	{
-		auto const s1 = photon.position.z / photon.direction.z;
+		/*countfunc++;
+		std::cout << photon.to_string();
+		std::cout << countfunc << std::endl;
+		std::cout << "Moves " << photon.moves << std::endl;
+		std::cout << "Weight " << photon.weight << std::endl;
+		std::cin.get();*/
+		auto const s1 = -photon.position.z / photon.direction.z;
 		//No check for lower boundery, because there is none
 		if (s1 < photon.step && photon.direction.z != 0.0)
 		{
@@ -192,13 +199,17 @@ void propagation::trace(photonstruct &photon)
 
 	if (is_hit(photon))
 	{
+		/*counthits++;
+		std::cout << counthits << std::endl;
+		*/
 		move(photon);
+		//TODO: Remove to a constant file.
 		auto const cos90D = 1 / 1000000;
 		auto const uz = -photon.direction.z;
 		double r;
 		if (uz > mat_.angle_threshold)
 		{
-			r = (1 - mat_.matproperties->refrac / 1 + mat_.matproperties->refrac);
+			r = (1 - mat_.matproperties->refrac) / (1 + mat_.matproperties->refrac);
 			r *= r;
 		}
 		else if (uz < cos90D)
@@ -247,8 +258,8 @@ void propagation::trace(photonstruct &photon)
 
 		if (dis(gen) <= r)
 		{
-			photon.direction.z *= -1;
-			resume(photon);
+			photon.direction.z *= -1.0;
+			trace(photon);
 
 		}
 		else
@@ -266,8 +277,9 @@ void propagation::trace(photonstruct &photon)
 
 }
 
-void propagation::resume(photonstruct & photon)
+void propagation::resume(photonstruct &photon)
 {
+	
 	move(photon);
 	cal_absorption(photon);
 	update_direction(photon);
@@ -275,7 +287,7 @@ void propagation::resume(photonstruct & photon)
 	{
 		roulette(photon);
 	}
-	else if (photon.weight < 0.0)
+	else if (photon.weight <= 0.0)
 	{
 		photon.dead = true;
 	}
@@ -288,15 +300,14 @@ void propagation::resume(photonstruct & photon)
 
 void propagation::update_arr_bucket(photonstruct &photon)
 {
-	auto const r = sqrt(photon.position.x * photon.position.x + photon.position.y * photon.position.y);
-	auto ir = static_cast<int>(r / out_.delr);
-	if (ir > out_.ARRSIZE - 1) ir = out_.ARRSIZE - 1;
+	auto ir = static_cast<int>(sqrt(photon.position.x * photon.position.x + photon.position.y * photon.position.y)
+							   / out_.delr);
+	if (ir > out_.bins_r - 1) ir = out_.bins_a - 1;
 
 	//auto ia = static_cast<int>(acos(-photon.direction.z) / (2 * m_pi*(ir + 0.5)*(out_.delr * out_.delr)));
-	auto ia = static_cast<int>(acos(-photon.direction.z) / out_.dela);
-
-	if (ia > out_.ARRSIZE - 1) ia = out_.ARRSIZE - 1;
-	out_.ref[ir][ia] += photon.weight*(1 - mat_.matproperties->reflec);
+	auto ia = static_cast<int>((acos(-photon.direction.z) / out_.dela));
+	if (ia > out_.bins_a - 1) ia = out_.bins_a - 1;
+	out_.Rd_r[ir][ia] += photon.weight;
 
 }
 
@@ -318,40 +329,63 @@ void propagation::write_to_logfile() const
 	std::cout << mc.get_numa() << std::endl;
 	auto bla = mc.get_ra();
 	std::stringstream csvout;
-	csvout << "weight_mcml " << "weight_me " << "ir";
+	csvout << "weight_me " << "weight_mcml " << "ir";
 	ccout << csvout.str() << std::endl;
 	csvout.str("");
 	std::stringstream output;
 	auto counter = 0.0;
-	for (auto j = 0; j < out_.ARRSIZE; j++)
+	auto scale1 = 2.0*m_pi*out_.delr*out_.delr*mat_.num_photons;;
+	auto scale2 = 0.0;
+	for (auto j = 0; j < out_.bins_r; j++)
 	{
-		for (auto i = 0; i < out_.ARRSIZE; i++)
+		for (auto i = 0; i < out_.bins_a; i++)
 		{
 			output.str("");
 			csvout.str("");
-			if (out_.ref[j][i] != 0.0)
-			{
-				csvout << out_.ref[j][i] << " " << bla[j][0] << " " << j << std::endl;
-				output << out_.ref[j][i] << " ir " << j << " ia " << i;
+			
+				scale2 = 1.0 / ((j + 0.5)*scale1);
+				csvout << out_.Rd_r[j][i] << " " << bla[j] << " " << j << std::endl;
+				output << out_.Rd_r[j][i] << " ir " << j << " ia " << i;
 				ccout << csvout.str();
 				fout << output.str();
 				fout << std::endl;
-			}
+			
 
-			counter += out_.ref[j][i];
+			counter += out_.Rd_r[j][i];
 		}
 	}
 	
 
 
-	auto scale2 = static_cast<double>(1.0 / mat_.num_photons);
-
-	output << "WEIGHT OF TRANSMITTANCE " << counter * scale2 << sampling_scheme;
+	auto scale3 = 1.0 / static_cast<double>(mat_.num_photons);
+	output.str("");
+	output << "WEIGHT OF TRANSMITTANCE " << counter * scale3 << sampling_scheme;
 	fout << output.str();
 	fout << std::endl;
 
 
 }
+
+int main()
+{
+	auto mc = mcml::MCMLParser("C://Users//Tim//Documents//WISE17_18//Bachelor//FirstPrototype//mcml_test//bli.txt");
+
+	auto const photons = mc.get_numphotons();
+	auto const layer_mcml = mc.GetLayers();
+	auto const layer_0 = layer_mcml[0];
+	auto lay = layer(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, propagation::getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
+	auto const material1 = material(photons, render.wth, 0.1, &lay, 0.999999999, false);
+	output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
+
+	propagation prop(material1, out);
+	for(auto i = 0; i < photons; i++)
+	{
+		photonstruct photon(1 - prop.get_material().matproperties->reflec, false, 0.0);
+		prop.trace(photon);
+	}
+	prop.write_to_logfile();
+}
+
 
 material propagation::get_material() const
 {

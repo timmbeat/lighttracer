@@ -57,14 +57,29 @@ namespace mcml
 		}
 	}
 
-	std::size_t MCMLParser::get_numr()
+	std::size_t MCMLParser::get_numr() const
 	{
 		return numBinsR_;
 	}
 
-	std::size_t MCMLParser::get_numa()
+	std::size_t MCMLParser::get_numa() const
 	{
 		return numBinsA_;
+	}
+
+	std::size_t MCMLParser::get_numphotons() const
+	{
+		return numPhotons_;
+	}
+
+	double MCMLParser::get_dr_() const
+	{
+		return dr_;
+	}
+
+	double MCMLParser::get_dz_() const
+	{
+		return dz_;
 	}
 
 	void MCMLParser::SmoothData()
@@ -265,9 +280,9 @@ namespace mcml
 		}
 	}
 
-	std::vector<std::vector<Real>> MCMLParser::get_ra() const
+	std::vector<Real> MCMLParser::get_ra() const
 	{
-		return rProfileRA_;
+		return rProfileR_;
 	}
 
 	std::string MCMLParser::SkipEmptyLines(std::ifstream& mcoIn)
