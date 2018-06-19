@@ -9,11 +9,9 @@ struct output
 		Rd_r = std::vector<std::vector<double>>(bins_r, std::vector<double>(bins_a));
 	}
 	std::vector<std::vector<double>> Rd_r;
-	const int bins_r;
-	const int bins_a;
+	int bins_r;
+	int bins_a;
 	//double ref[ARRSIZEr][ARRSIZEa];
 	double delr;
 	double dela;
-	std::vector<bucket> absorption;
-	std::vector<bucket> trans;
 };

@@ -21,7 +21,8 @@ private:
 	static double reflection(double const refrac)
 	{
 
-		auto const tmp = (1 - refrac)/(1+refrac);
+		auto const tmp = (refrac - 1)/(refrac+1);
+		
 		return tmp * tmp;
 	}
 };

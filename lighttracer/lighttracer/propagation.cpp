@@ -5,14 +5,12 @@
 #include <random>
 #include <iostream>
 #include "mcml_parser.h"
+#include "constants.h"
 std::random_device rd;
 std::mt19937 gen(rd());
 std::uniform_real_distribution<double> dis(0.0, 1.0);
-const double m_pi = 3.14159265358979323846;
-std::ofstream fout("logfile.txt", std::ofstream::app);
-std::ofstream ccout("output.csv", std::ofstream::app);
-int counthits = 0;
-int countfunc = 0;
+std::ofstream fout("logfile.txt", std::ofstream::trunc);
+std::ofstream ccout("output.csv", std::ofstream::trunc);
 struct dviwedi dvi;
 struct renderoptions render;
 propagation::~propagation()
@@ -69,7 +67,7 @@ glm::dvec2 propagation::calculate_scattering() const
 		scattering = (1 + g * g - temp * temp) / (2 * g);
 	}
 
-	auto const azimuthal = 2 * m_pi * dis(gen);
+	auto const azimuthal = 2 * slabProfiles::pi<double>() * dis(gen);
 
 	return glm::dvec2(scattering, azimuthal);
 }
@@ -84,7 +82,7 @@ void propagation::update_direction(struct photonstruct& photon) const
 	auto const ux = photon.direction.x;
 	auto const uy = photon.direction.y;
 	auto const uz = photon.direction.z;
-	if (angles.y < m_pi)
+	if (angles.y < slabProfiles::pi<double>())
 	{
 		sinp = sqrt(1.0 - cosp * cosp);
 	}
@@ -170,12 +168,6 @@ bool propagation::is_hit(photonstruct& photon)
 
 	if (photon.direction.z < 0.0)
 	{
-		/*countfunc++;
-		std::cout << photon.to_string();
-		std::cout << countfunc << std::endl;
-		std::cout << "Moves " << photon.moves << std::endl;
-		std::cout << "Weight " << photon.weight << std::endl;
-		std::cin.get();*/
 		auto const s1 = -photon.position.z / photon.direction.z;
 		//No check for lower boundery, because there is none
 		if (s1 < photon.step && photon.direction.z != 0.0)
@@ -199,102 +191,85 @@ void propagation::trace(photonstruct &photon)
 
 	if (is_hit(photon))
 	{
-		/*counthits++;
-		std::cout << counthits << std::endl;
-		*/
+
 		move(photon);
-		//TODO: Remove to a constant file.
-		auto const cos90D = 1 / 1000000;
-		auto const uz = -photon.direction.z;
+		auto const uz = photon.direction.z;
 		double r;
-		if (uz > mat_.angle_threshold)
-		{
-			r = (1 - mat_.matproperties->refrac) / (1 + mat_.matproperties->refrac);
-			r *= r;
-		}
-		else if (uz < cos90D)
+
+		if(-uz < slabProfiles::cos90_d<mcml::Real>())
 		{
 			r = 1.0;
 		}
-		else
-		{
-			double sa1, sa2;
-			double ca2;
-
-			sa1 = sqrt(1 - uz * uz);
-			sa2 = uz * sa1;
-
-			if (sa2 >= 1.0)
-			{
-				r = 1.0;
-			}
-			else
-			{
-				double cap, cam;
-				double sap, sam;
-				ca2 = sqrt(1 - sa2 * sa2);
-
-				cap = uz * ca2 - sa1 * sa2;
-				cam = uz * ca2 + sa1 * sa2;
-				sap = sa1 * ca2 + uz * sa2;
-
-				sam = sa1 * ca2 - uz * sa2;
-				r = 0.5 * sam*sam*(cam*cam + cap * cap) / (sap*sap*cam*cam);
-			}
-
-		}
-		/*const auto angleofincidence = acos(abs(photon.direction.z));
-		const auto angleoftransmission = asin(mat_.matproperties->refrac*sin(angleofincidence));
-		auto const a = sin(angleofincidence - angleoftransmission);
-		auto const b = sin(angleofincidence + angleoftransmission);
-
-		auto const smtmp = a * a;
-		auto const sptmp = b * b;
-		auto const tmtmp = a / sqrt(1 - a * a);
-		auto const tptmp = b / sqrt(1 - b * b);
-
-		const auto internalreflactance = 1 / 2 * smtmp / sptmp +
-			(tmtmp*tmtmp) / (tptmp*tptmp);*/
+		else r = fresnel(-uz);
 
 		if (dis(gen) <= r)
 		{
-			photon.direction.z *= -1.0;
-			trace(photon);
-
+			photon.direction.z = -uz;
 		}
 		else
 		{
 			update_arr_bucket(photon);
 			//If photon is out of the tissue
 			photon.dead = true;
-			//updateBuckets(photon, res.trans);
 		}
 	}
 	else
 	{
-		resume(photon);
+		move(photon);
+		cal_absorption(photon);
+		update_direction(photon);
 	}
 
 }
 
-void propagation::resume(photonstruct &photon)
+
+//Same as mcml
+double propagation::fresnel(double const uz) const 
 {
+	//Because Vaccum has a refractive index of 1.0
+	double r;
+	if(mat_.matproperties->refrac == 1.0)
+	{
+		r = 0.0;
+	}
+	else if(uz > mat_.angle_threshold)
+	{
+		r = (mat_.matproperties->refrac-1) / (mat_.matproperties->refrac+1);
+		r *= r;
+	}
+	//Insert Constant here
+	else if(uz < 0.0000001)
+	{
+		r = 1.0;
+	}
+	else
+	{
+		auto const sa1 = sqrt(1 - uz * uz);
+		//TODO: THIS LITTLE ONE HERE WAS THE MISTAKE ALL ALONG
+		auto const sa2 = mat_.matproperties->refrac * sa1;
+		/*
+		 * OLD ONE: auto const sa2 = uz * sa1..
+		 */
+		if (sa2 >= 1.0)
+		{
+			r = 1.0;
+		}
+		else
+		{
+
+			auto const ca2 = sqrt(1 - sa2 * sa2);
+
+			auto const cap = uz * ca2 - sa1 * sa2;
+			auto const cam = uz * ca2 + sa1 * sa2;
+			auto const sap = sa1 * ca2 + uz * sa2;
+
+			auto const sam = sa1 * ca2 - uz * sa2;
+			r = 0.5 * sam*sam*(cam*cam + cap * cap) / (sap*sap*cam*cam);
+		}
+
+	}
 	
-	move(photon);
-	cal_absorption(photon);
-	update_direction(photon);
-	if (photon.weight < mat_.wth && !photon.dead)
-	{
-		roulette(photon);
-	}
-	else if (photon.weight <= 0.0)
-	{
-		photon.dead = true;
-	}
-	if (!photon.dead)
-	{
-		trace(photon);
-	}
+	return r;
 }
 
 
@@ -302,11 +277,15 @@ void propagation::update_arr_bucket(photonstruct &photon)
 {
 	auto ir = static_cast<int>(sqrt(photon.position.x * photon.position.x + photon.position.y * photon.position.y)
 							   / out_.delr);
-	if (ir > out_.bins_r - 1) ir = out_.bins_a - 1;
+	if (ir > out_.bins_r - 1) ir = out_.bins_r - 1;
 
 	//auto ia = static_cast<int>(acos(-photon.direction.z) / (2 * m_pi*(ir + 0.5)*(out_.delr * out_.delr)));
 	auto ia = static_cast<int>((acos(-photon.direction.z) / out_.dela));
-	if (ia > out_.bins_a - 1) ia = out_.bins_a - 1;
+	if (ia > out_.bins_a - 1)
+	{
+		ia = out_.bins_a - 1;
+
+	}
 	out_.Rd_r[ir][ia] += photon.weight;
 
 }
@@ -334,8 +313,12 @@ void propagation::write_to_logfile() const
 	csvout.str("");
 	std::stringstream output;
 	auto counter = 0.0;
-	auto scale1 = 2.0*m_pi*out_.delr*out_.delr*mat_.num_photons;;
-	auto scale2 = 0.0;
+	///////////////////
+	//Scaling/////////
+	//////////////////
+	auto scale1 = 2.0*slabProfiles::pi<double>()*out_.delr*out_.delr*mat_.num_photons;
+	
+
 	for (auto j = 0; j < out_.bins_r; j++)
 	{
 		for (auto i = 0; i < out_.bins_a; i++)
@@ -343,15 +326,18 @@ void propagation::write_to_logfile() const
 			output.str("");
 			csvout.str("");
 			
-				scale2 = 1.0 / ((j + 0.5)*scale1);
-				csvout << out_.Rd_r[j][i] << " " << bla[j] << " " << j << std::endl;
-				output << out_.Rd_r[j][i] << " ir " << j << " ia " << i;
+				csvout << out_.Rd_r[j][i] * 1.0 / ((j + 0.5)*scale1) << " " << bla[j] << " " << j << std::endl;
+				output << out_.Rd_r[j][i] * 1.0 / ((j + 0.5)*scale1) << " ir " << j << " ia " << i;
 				ccout << csvout.str();
 				fout << output.str();
 				fout << std::endl;
 			
-
-			counter += out_.Rd_r[j][i];
+			
+			
+					counter += out_.Rd_r[j][i];
+				
+			
+			
 		}
 	}
 	
@@ -374,14 +360,21 @@ int main()
 	auto const layer_mcml = mc.GetLayers();
 	auto const layer_0 = layer_mcml[0];
 	auto lay = layer(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, propagation::getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
-	auto const material1 = material(photons, render.wth, 0.1, &lay, 0.999999999, false);
+	auto material1 = material(photons, render.wth, 0.1, &lay, 0.999999999, false);
 	output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
-
+	std::cout << lay.reflec << std::endl;
 	propagation prop(material1, out);
 	for(auto i = 0; i < photons; i++)
 	{
-		photonstruct photon(1 - prop.get_material().matproperties->reflec, false, 0.0);
-		prop.trace(photon);
+		photonstruct photon(1 - lay.reflec, false);
+		while(!photon.dead)
+		{
+			prop.trace(photon);
+			if (photon.weight < prop.get_material().wth && !photon.dead)
+			{
+				prop.roulette(photon);
+			}
+		}
 	}
 	prop.write_to_logfile();
 }

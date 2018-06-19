@@ -9,7 +9,7 @@
 class propagation
 {
 	public:
-	propagation(material const mat, output const out) : mat_(mat), out_(out)
+	propagation(material const mat, output out) : mat_(mat), out_(out)
 	{
 	}
 	~propagation();
@@ -22,8 +22,7 @@ class propagation
 	void update_arr_bucket(photonstruct &photon);
 	void write_to_logfile() const;
 	void roulette(photonstruct &photon) const;
-	void resume(photonstruct &photon);
-
+	double fresnel(double uz) const ;
 	double cal_stepsize(photonstruct &photon) const;
 	double dwivedi() const;
 
@@ -32,7 +31,7 @@ class propagation
 
 	bool is_hit(photonstruct &photon);
 
-	material get_material() const;
+	material get_material() const ;
 	glm::dvec2 calculate_scattering() const;
 
 

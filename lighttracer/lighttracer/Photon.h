@@ -5,8 +5,8 @@
 
 struct photonstruct
 {
-	photonstruct(double const weight, bool const dead, double const step) :
-		position(glm::dvec3(0, 0, 0)), direction(glm::dvec3(0, 0, 1)), weight(weight), dead(dead), step(step), sleft(0), alreadymoved(false)
+	photonstruct(double const weight, bool const dead) :
+		position(glm::dvec3(0, 0, 0)), direction(glm::dvec3(0, 0, 1)), weight(weight), dead(dead), sleft(0), alreadymoved(false)
 	{
 	}
 	glm::dvec3 position;
