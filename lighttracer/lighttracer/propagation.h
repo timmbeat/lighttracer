@@ -2,45 +2,47 @@
 #include "material.h"
 #include "Input.h"
 #include "Photon.h"
+#include <functional>
+#include <random>
 
 
-
+static std::random_device rd;
+static std::mt19937 gen(rd());
+static std::uniform_real_distribution<double> dis(0.0, 1.0);
 
 class propagation
 {
 	public:
-	propagation(material const mat, output out) : mat_(mat), out_(out)
-	{
-	}
-	~propagation();
+	virtual ~propagation() = default;
+
+	void virtual update_direction(photonstruct * photon, material const * mat) = 0;
+	double virtual cal_stepsize(photonstruct * photon, material const * mat) = 0;
+	void virtual run(const std::string mcml_path) = 0;
 
 
-	void cal_absorption(photonstruct &photon) const;
-	void move(photonstruct &photon);
-	void update_direction(photonstruct &photon)const;
-	void trace(photonstruct &photon);
-	void update_arr_bucket(photonstruct &photon);
-	void write_to_logfile() const;
-	void roulette(photonstruct &photon) const;
-	double fresnel(double uz) const ;
-	double cal_stepsize(photonstruct &photon) const;
-	double dwivedi() const;
+	void cal_absorption(photonstruct * photon, material const * mat_) const;
+	void move(photonstruct * photon);
+	
+	void trace(photonstruct * photon, output * out, material  const * mat_);
 
-	static double getv0(double alpha);
+	void update_arr_bucket(photonstruct const * photon, output * out_);
+	void write_to_logfile(output * out_, material const *  mat_) const;
+	void roulette(photonstruct * photon, material const * mat_) const;
+	double fresnel(double const uz, material const * mat_) const ;
+	//double dwivedi() const;
 	static double sign(double x);
-
-	bool is_hit(photonstruct &photon);
-
-	material get_material() const ;
-	glm::dvec2 calculate_scattering() const;
+	
+	bool is_hit(photonstruct * photon, material const * mat_);
 
 
 
 
-	private:
-	material mat_;
-	output out_;
+	
+
 
 };
 
-
+static double random()
+{
+	return dis(gen);
+}

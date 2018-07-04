@@ -27,6 +27,10 @@ namespace slabProfiles
 	{
 		return static_cast<Real>(1 / 1000000000);
 	}
+	template<typename Real> constexpr Real cos_1()
+	{
+		return static_cast<Real>(0.99999999999999999);
+	}
 	template<typename Real> constexpr Real clamp(Real x, Real x0, Real x1)
 	{
 		return std::min(std::max(x0, x), x1);

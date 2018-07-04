@@ -19,6 +19,7 @@ struct photonstruct
 	//For now unnessary..
 	double step = 0.0;
 	double sleft = 0.0;
+	double wz = 0.0;
 	std::string to_string() const
 	{
 		std::stringstream output;

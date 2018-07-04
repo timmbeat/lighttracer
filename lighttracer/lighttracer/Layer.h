@@ -10,6 +10,12 @@ struct layer
 		reflec = reflection(refrac);
 	}
 
+	layer(double const refrac, double const absorption, double const scattering, double const anisotropy)
+		:refrac(refrac), absorption(absorption), scattering(scattering), anisotropy(anisotropy)
+	{
+		reflec = reflection(refrac);
+		v0 = 0;
+	}
 	double refrac;
 	double absorption;
 	double scattering;

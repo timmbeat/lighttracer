@@ -20,6 +20,7 @@ struct renderoptions
 	const double wth = 0.0001;
 	//Amount of photons
 	const long photons = 100000;
+
 };
 
 struct dviwedi
