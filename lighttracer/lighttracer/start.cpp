@@ -8,6 +8,4 @@ int main()
 	sam.run("mcml_out.txt");
 
 
-
-
 }
