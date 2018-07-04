@@ -1,7 +1,6 @@
 #pragma once
 #include <glm.hpp>
 #include <vector>
-#include "bucket.h"
 struct output
 {
 	output(int const bins_r, int const bins_a, double const delr, double const dela): bins_r(bins_r), bins_a(bins_a), delr(delr), dela(dela)

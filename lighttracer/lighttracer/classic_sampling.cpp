@@ -46,13 +46,7 @@ void classic_sampling::run(const std::string mcml_path)
 
 }
 
-int main()
-{
 
-	classic_sampling sam{};
-	sam.run("C://Users//Tim//Documents//WISE17_18//Bachelor//FirstPrototype//mcml_test//bli.txt");
-
-}
 
 double classic_sampling::cal_stepsize(photonstruct* photon, material const* mat)
 {
