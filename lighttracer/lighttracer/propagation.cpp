@@ -7,9 +7,8 @@
 #include "mcml_parser.h"
 #include "constants.h"
 #include <functional>
+#include <iomanip>
 
-std::ofstream fout("logfile.txt", std::ofstream::trunc);
-std::ofstream ccout("output.csv", std::ofstream::trunc);
 struct renderoptions render;
 //triple checkt
 
@@ -19,21 +18,6 @@ void propagation::cal_absorption(photonstruct * photon, material const * mat_) c
 	
 	photon->weight -= tmp;
 }
-
-//triple checkt...
-//double propagation::cal_stepsize(photonstruct& photon) const
-//{
-//	double ran;
-//	do
-//	{
-//		ran = random();
-//
-//	}
-//	while (ran <= 0.0);
-//	auto const ret = -log(ran) / (mat_.matproperties->absorption + mat_.matproperties->scattering);
-//
-//	return ret;
-//}
 
 double propagation::sign(double const x)
 {
@@ -47,78 +31,6 @@ void propagation::move(photonstruct * photon)
 	photon->position.y = photon->position.y + photon->direction.y*photon->step;
 	photon->position.z = photon->position.z + photon->direction.z*photon->step;
 }
-
-////Triple checkt..
-//glm::dvec2 propagation::calculate_scattering(material * const mat_) const
-//{
-//	double scattering;
-//	if (mat_.matproperties->anisotropy == 0.0)
-//	{
-//
-//		scattering = 2 * random() - 1;
-//	}
-//	else
-//	{
-//		auto const g = mat_.matproperties->anisotropy;
-//		auto const temp = (1 - g * g) / (1 - g + 2 * g * random());
-//		scattering = (1 + g * g - temp * temp) / (2 * g);
-//	}
-//
-//	auto const azimuthal = 2 * slabProfiles::pi<double>() * random();
-//
-//	return glm::dvec2(scattering, azimuthal);
-//}
-
-//triple checkt..
-//void propagation::update_direction(struct photonstruct& photon, std::function<void(photonstruct &phot)> update_) const
-//{
-	//update_(photon);
-	/*auto const sint = sqrt(1 - angles.x * angles.x);
-	auto const cosp = cos(angles.y);
-	double sinp;
-	auto const ux = photon.direction.x;
-	auto const uy = photon.direction.y;
-	auto const uz = photon.direction.z;
-	if (angles.y < slabProfiles::pi<double>())
-	{
-		sinp = sqrt(1.0 - cosp * cosp);
-	}
-	else
-	{
-		sinp = -sqrt(1.0 - cosp * cosp);
-	}
-
-	if (fabs(photon.direction.z) > mat_.angle_threshold)
-	{
-		photon.direction.x = sint * cosp;
-		photon.direction.y = sint * sinp;
-		photon.direction.z = sign(uz)*angles.x;
-	}
-	else
-	{
-		auto const temp = sqrt(1.0 - uz * uz);
-		photon.direction.x = sint * (ux*uz*cosp - uy * sinp) / temp + ux * angles.x;
-
-		photon.direction.y = sint * (uy*uz*cosp + ux * sinp) / temp + uy * angles.x;
-
-		photon.direction.z = -sint * cosp*temp + uz * angles.x;
-	}
-*/
-
-//}
-
-//double propagation::dwivedi() const
-//{
-//	auto const y = dis(gen);
-//	auto const x = (mat_.matproperties->v0 - 1) / (mat_.matproperties->v0 + 1);
-//	auto const wz_new = mat_.matproperties->v0*pow((mat_.matproperties->v0 + 1), y)*(pow((mat_.matproperties->v0 - 1), y) + pow((mat_.matproperties->v0 + 1), y));
-//	auto const tmp = pow(x, y);
-//	auto const wz = mat_.matproperties->v0 - (mat_.matproperties->v0 + 1)*tmp;
-//	return (-log(1 - dis(gen))) / ((1 - wz / mat_.matproperties->v0)*(mat_.matproperties->scattering + mat_.matproperties->absorption));
-//}
-
-
-
 
 void propagation::roulette(photonstruct  * photon, material const * mat_) const
 {
@@ -169,12 +81,8 @@ bool propagation::is_hit(photonstruct * photon, material const * mat_)
 	return false;
 }
 
-//void propagation::trace(photonstruct &photon, std::function<double(material &mat)> cal_stepsize, std::function<void(photonstruct &phot)> update_direction)
 void propagation::trace(photonstruct * photon, output * out, material  const * mat_)
 {
-	//Specular reflectance here, but not necassary because that would only decrement
-	//the weight by constant
-
 
 	if (is_hit(photon, mat_))
 	{
@@ -209,7 +117,6 @@ void propagation::trace(photonstruct * photon, output * out, material  const * m
 
 }
 
-//Same as mcml
 double propagation::fresnel(double const uz, material const * mat_) const 
 {
 	//Because Vaccum has a refractive index of 1.0
@@ -218,13 +125,13 @@ double propagation::fresnel(double const uz, material const * mat_) const
 	{
 		r = 0.0;
 	}
-	else if(uz > mat_->angle_threshold)
+	else if(uz > slabProfiles::cos_1<double>())
 	{
 		r = (mat_->matproperties->refrac-1) / (mat_->matproperties->refrac+1);
 		r *= r;
 	}
 	//Insert Constant here
-	else if(uz < 0.0000001)
+	else if(uz < slabProfiles::cos90_d<double>())
 	{
 		r = 1.0;
 	}
@@ -275,17 +182,16 @@ void propagation::update_arr_bucket(photonstruct const * photon, output * out_)
 
 }
 
-void propagation::write_to_logfile(output * out_, material const *  mat_) const
+void propagation::write_to_logfile(output * out_, material const *  mat_, std::string const path, std::string const csv_path) const
 {
 	auto mc = mcml::MCMLParser("C://Users//Tim//Documents//WISE17_18//Bachelor//FirstPrototype//mcml_test//bli.txt");
+	std::ofstream fout(path, std::ofstream::trunc);
+	std::ofstream ccout(csv_path, std::ofstream::trunc);
 
-	std::string sampling_scheme = "";
 
-	std::cout << mc.get_numr() << std::endl;
-	std::cout << mc.get_numa() << std::endl;
 	auto bla = mc.get_ra();
 	std::stringstream csvout;
-	csvout << "weight_me " << "weight_mcml " << "ir";
+	csvout << std::setw(11) << std::left << "weight_me" << std::setw(11) << std::left << "weight_mcml" << " ir";
 	ccout << csvout.str() << std::endl;
 	csvout.str("");
 	std::stringstream output;
@@ -303,8 +209,8 @@ void propagation::write_to_logfile(output * out_, material const *  mat_) const
 			output.str("");
 			csvout.str("");
 			
-				csvout << out_->Rd_r[j][i] * 1.0 / ((j + 0.5)*scale1) << " " << bla[j] << " " << j << std::endl;
-				output << out_->Rd_r[j][i] * 1.0 / ((j + 0.5)*scale1) << " ir " << j << " ia " << i;
+				csvout << std::setw(10) << std::left << out_->Rd_r[j][i] * 1.0 / ((j + 0.5)*scale1) << " " << std::setw(11) << std::left << bla[j] << " " << j << std::endl;
+				output << std::setw(10) << std::left << out_->Rd_r[j][i] * 1.0 / ((j + 0.5)*scale1) << " ir " << j << " ia " << i;
 				ccout << csvout.str();
 				fout << output.str();
 				fout << std::endl;
@@ -322,7 +228,7 @@ void propagation::write_to_logfile(output * out_, material const *  mat_) const
 
 	auto scale3 = 1.0 / static_cast<double>(mat_->num_photons);
 	output.str("");
-	output << "WEIGHT OF TRANSMITTANCE " << counter * scale3 << sampling_scheme;
+	output << "WEIGHT OF TRANSMITTANCE " << counter * scale3;
 	fout << output.str();
 	fout << std::endl;
 

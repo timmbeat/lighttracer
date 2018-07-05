@@ -24,7 +24,7 @@ void classic_sampling::run(const std::string mcml_path)
 
 	//Create layer and Material, these are the rendering options
 	layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, 0);
-	material material1(mc.get_numphotons(), render.wth, 0.1, &lay, 0.999999999, false);
+	material material1(mc.get_numphotons(), render.wth, 0.1, &lay);
 	output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
 
 
@@ -41,7 +41,7 @@ void classic_sampling::run(const std::string mcml_path)
 			}
 		}
 	}
-	write_to_logfile(&out, &material1);
+	write_to_logfile(&out, &material1, "logfile.txt", "output.csv");
 
 
 }
@@ -105,7 +105,7 @@ void classic_sampling::update_direction(photonstruct* photon, material const* ma
 		sinp = -sqrt(1.0 - cosp * cosp);
 	}
 
-	if (fabs(photon->direction.z) > 0.99999999)
+	if (fabs(photon->direction.z) > slabProfiles::cos_1<double>())
 	{
 		photon->direction.x = sint * cosp;
 		photon->direction.y = sint * sinp;

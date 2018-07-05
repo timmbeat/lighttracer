@@ -29,7 +29,7 @@ void dwivedi_sampling::run(const std::string mcml_path)
 
 	//Create layer and Material, these are the rendering options
 	layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
-	material material1(mc.get_numphotons(), render.wth, 0.1, &lay, 0.999999999, false);
+	material material1(mc.get_numphotons(), render.wth, 0.1, &lay);
 	output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
 	
 	
@@ -46,7 +46,7 @@ void dwivedi_sampling::run(const std::string mcml_path)
 			}
 		}
 	}
-	write_to_logfile(&out, &material1);
+	write_to_logfile(&out, &material1, "dwivedi_logfile.txt", "dwivedi_output.csv");
 
 
 }

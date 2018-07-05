@@ -26,7 +26,7 @@ class propagation
 	void trace(photonstruct * photon, output * out, material  const * mat_);
 
 	void update_arr_bucket(photonstruct const * photon, output * out_);
-	void write_to_logfile(output * out_, material const *  mat_) const;
+	void write_to_logfile(output * out_, material const *  mat_, std::string const path, std::string const csv_path) const;
 	void roulette(photonstruct * photon, material const * mat_) const;
 	double fresnel(double const uz, material const * mat_) const ;
 	//double dwivedi() const;

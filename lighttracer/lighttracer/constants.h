@@ -29,7 +29,7 @@ namespace slabProfiles
 	}
 	template<typename Real> constexpr Real cos_1()
 	{
-		return static_cast<Real>(0.99999999999999999);
+		return static_cast<Real>(0.999999999999);
 	}
 	template<typename Real> constexpr Real clamp(Real x, Real x0, Real x1)
 	{
