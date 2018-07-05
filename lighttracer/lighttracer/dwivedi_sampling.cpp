@@ -10,15 +10,6 @@ extern struct renderoptions render;
 
 
 
-//TODO: FINISH
-
-//int main()
-//{
-//
-//	dwivedi_sampling sam;
-//	sam.run("C://Users//Tim//Documents//WISE17_18//Bachelor//FirstPrototype//mcml_test//bli.txt");
-//
-//}
 void dwivedi_sampling::run(const std::string mcml_path)
 {
 	//Parsing the Result of mcml
@@ -31,7 +22,6 @@ void dwivedi_sampling::run(const std::string mcml_path)
 	layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
 	material material1(mc.get_numphotons(), render.wth, 0.1, &lay);
 	output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
-	
 	
 	//Create prop class for Rendering
 	for (auto i = 0; i < material1.num_photons; i++)
@@ -92,7 +82,7 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 		sinp = -sqrt(1.0 - cosp * cosp);
 	}
 
-	if (fabs(photon->direction.z) > 0.99999999)
+	if (fabs(photon->direction.z) > slabProfiles::cos_1<double>())
 	{
 		photon->direction.x = sint * cosp;
 		photon->direction.y = sint * sinp;
