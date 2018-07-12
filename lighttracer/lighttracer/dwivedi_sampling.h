@@ -14,5 +14,7 @@ class dwivedi_sampling : propagation
 	void update_direction(photonstruct* photon, material const* mat)  override;
 	double cal_stepsize(photonstruct* photon, material const* mat)  override;
 	void run(const std::string mcml_path) override;
+	double scattering_function(double const v0, double const wz);
+	double scattering_function_hg(double const g, double const wz);
 };
 

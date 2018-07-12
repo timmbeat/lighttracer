@@ -3,6 +3,7 @@
 #include "config.h"
 #include "constants.h"
 #include "mcml_parser.h"
+#include <iostream>
 
 struct dviwedi dvi;
 extern struct renderoptions render;
@@ -36,7 +37,7 @@ void dwivedi_sampling::run(const std::string mcml_path)
 			}
 		}
 	}
-	write_to_logfile(&out, &material1, "dwivedi_logfile.txt", "dwivedi_output.csv");
+	write_to_logfile(&out, &material1, "dwivedi_logfile.txt", "dwivedi_output.csv", mc);
 
 
 }
@@ -45,22 +46,24 @@ void dwivedi_sampling::run(const std::string mcml_path)
 
 double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat) 
 {
-	auto const y = random();
-	auto const x = (mat->matproperties->v0 - 1) / (mat->matproperties->v0 + 1);
-	auto const wz_new = mat->matproperties->v0*pow((mat->matproperties->v0 + 1), y)*(pow((mat->matproperties->v0 - 1), y) + pow((mat->matproperties->v0 + 1), y));
-	auto const tmp = pow(x, y);
-	auto const wz = mat->matproperties->v0 - (mat->matproperties->v0 + 1)*tmp;
+	auto const v0 = mat->matproperties->v0;
+	auto const v0_1 = mat->matproperties->v0 + 1;
+
+	//Immer negativ!
+	auto const wz = v0 - v0_1 * pow((v0 - 1) / v0_1, random());
+	
 	photon->wz = wz;
+	
+	
 	return (-log(1 - random())) / ((1 - wz / mat->matproperties->v0)*(mat->matproperties->scattering + mat->matproperties->absorption));
 }
 
 
 
-double dwivedi_sampling::getv0(double const alpha)
+double dwivedi_sampling::getv0(double const   alpha)
 {
 	return alpha > 0.56 ? dvi.get_highv0(alpha) : dvi.get_lowv0(alpha);
 }
-
 
 
 void dwivedi_sampling::update_direction(photonstruct* photon, material const* mat)
@@ -68,10 +71,8 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 	auto const wz = photon->wz;
 	auto const y = 2 * slabProfiles::pi<double>() * random();
 	auto const sint = sqrt(1 - wz * wz);
-	auto const cosp = cos(y);
+    auto const cosp = cos(y);
 	double sinp;
-	auto const ux = photon->direction.x;
-	auto const uy = photon->direction.y;
 	auto const uz = photon->direction.z;
 	if (y < slabProfiles::pi<double>())
 	{
@@ -82,22 +83,37 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 		sinp = -sqrt(1.0 - cosp * cosp);
 	}
 
-	if (fabs(photon->direction.z) > slabProfiles::cos_1<double>())
-	{
 		photon->direction.x = sint * cosp;
 		photon->direction.y = sint * sinp;
 		photon->direction.z = glm::sign(uz)*wz;
-	}
-	else
-	{
-		auto const temp = sqrt(1.0 - uz * uz);
-		photon->direction.x = sint * (ux*uz*cosp - uy * sinp) / temp + ux * wz;
 
-		photon->direction.y = sint * (uy*uz*cosp + ux * sinp) / temp + uy * wz;
 
-		photon->direction.z = -sint * cosp*temp + uz * wz;
-	}
+		//photon->weight = 0.5 * photon->weight;
+		//????????
+
+		//photon->weight = photon->weight * 0.5 / scattering_function(mat->matproperties->v0, wz);
+
+		//photon->weight = photon->weight * scattering_function_hg(mat->matproperties->anisotropy, uz) / fabs(wz);
+		photon->weight = photon->weight * scattering_function_hg(mat->matproperties->anisotropy, wz) / fabs(wz);
+		//photon->weight = photon->weight *  scattering_function_hg(mat->matproperties->anisotropy, uz) / wz;
 }
 
 
+double dwivedi_sampling::scattering_function(double const v0, double const wz)
+{
+	auto const res = 1 / log((v0 + 1) / (v0 - 1)) * 1 / (v0 - wz);
+	if (res < 0) std::cout << "!!!!!!!!!!!!";
+
+	return res;
+
+}
+
+double dwivedi_sampling::scattering_function_hg(double const g, double const wz)
+{
+	auto const qg = g * g;
+	auto const res = (1 - qg) / (2 * pow((2 * (1 + qg - 2 * g*wz)), 3 / 2));
+	return res;
+
+
+}
 

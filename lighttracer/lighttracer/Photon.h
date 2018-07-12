@@ -2,6 +2,7 @@
 #include <vector>
 #include <glm.hpp>
 #include <sstream>
+#include <iomanip>
 
 struct photonstruct
 {
@@ -23,7 +24,8 @@ struct photonstruct
 	std::string to_string() const
 	{
 		std::stringstream output;
-		output << "x " << direction.x << " y " << direction.y << " z " << direction.z << std::endl;
+		output  << std::setw(15) << std::left << "DIRECTION" << std::setw(15) << std::left << direction.x << std::setw(15) << std::left << direction.y << std::setw(15) << std::left <<  direction.z << "\n"
+				<< std::setw(15) << std::left << "POSITION"  << std::setw(15) << std::left << position.x  << std::setw(15) << std::left << position.y  << std::setw(15) << std::left <<  position.z;
 
 		return output.str();
 	}

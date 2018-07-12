@@ -25,7 +25,7 @@ namespace slabProfiles
 	}
 	template<typename Real> constexpr Real cos90_d()
 	{
-		return static_cast<Real>(1 / 1000000000);
+		return static_cast<Real>(1e-6);
 	}
 	template<typename Real> constexpr Real cos_1()
 	{

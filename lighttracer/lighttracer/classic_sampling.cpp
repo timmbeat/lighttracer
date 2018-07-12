@@ -41,7 +41,7 @@ void classic_sampling::run(const std::string mcml_path)
 			}
 		}
 	}
-	write_to_logfile(&out, &material1, "logfile.txt", "output.csv");
+	write_to_logfile(&out, &material1, "logfile.txt", "output.csv", mc);
 
 
 }

@@ -4,7 +4,7 @@
 #include "Photon.h"
 #include <functional>
 #include <random>
-
+#include "mcml_parser.h"
 
 static std::random_device rd;
 static std::mt19937 gen(rd());
@@ -26,17 +26,14 @@ class propagation
 	void trace(photonstruct * photon, output * out, material  const * mat_);
 
 	void update_arr_bucket(photonstruct const * photon, output * out_);
-	void write_to_logfile(output * out_, material const *  mat_, std::string const path, std::string const csv_path) const;
+	void write_to_logfile(output * out_, material const *  mat_, std::string const path, std::string const csv_path, mcml::MCMLParser &mc) const;
 	void roulette(photonstruct * photon, material const * mat_) const;
 	double fresnel(double const uz, material const * mat_) const ;
-	//double dwivedi() const;
-	static double sign(double x);
 	
 	bool is_hit(photonstruct * photon, material const * mat_);
 
 
-
-
+	int RayTriangle(glm::dvec3 &Point, glm::dvec3 &Vector, std::vector<glm::dvec3> & Plane);
 	
 
 

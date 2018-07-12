@@ -19,11 +19,6 @@ void propagation::cal_absorption(photonstruct * photon, material const * mat_) c
 	photon->weight -= tmp;
 }
 
-double propagation::sign(double const x)
-{
-	if (x == 0) return 0;
-	return x > 0 ? 1 : -1;
-}
 
 void propagation::move(photonstruct * photon)
 {
@@ -105,6 +100,19 @@ void propagation::trace(photonstruct * photon, output * out, material  const * m
 		{
 			update_arr_bucket(photon, out);
 			//If photon is out of the tissue
+			auto Tri = std::vector<glm::dvec3>{ glm::dvec3(-1.0, -1.0, -2.0) , glm::dvec3(1.0,-1.0, -2.0), glm::dvec3(0.0, 1.0, -2.0) };
+			if(RayTriangle(photon->position, photon->direction, Tri) == 1)
+			{
+				
+				out->kam_counter++;
+				
+				if( out->kam_counter % 500 == 0)
+				{
+					std::cout << out->kam_counter;
+					std::cin.get();
+				}
+			}
+
 			photon->dead = true;
 		}
 	}
@@ -115,6 +123,43 @@ void propagation::trace(photonstruct * photon, output * out, material  const * m
 		update_direction(photon, mat_);
 	}
 
+}
+
+int propagation::RayTriangle(glm::dvec3 &Point, glm::dvec3 &Vector, std::vector<glm::dvec3> &Plane)
+{
+	auto const a = Plane[0];
+	auto const b = Plane[1];
+	auto const c = Plane[2];
+		  
+	auto const xamxb = a.x - b.x; //---a---
+	auto const xamxc = a.x - c.x; //---d---
+	auto const xamxe = a.x - Point.x; //---j---
+		 
+	auto const yamye = a.y - Point.y; //--k--
+	auto const yamyc = a.y - c.y; //--e--
+	auto const yamyb = a.y - b.y; //--b--
+		 
+	auto const zamze = a.z - Point.z; //--l--
+	auto const zamzc = a.z - c.z; //--f--
+	auto const zamzb = a.z - b.z; //--c--
+
+	auto const M = xamxb * (yamyc*Vector.z - Vector.y*zamzc) + yamyb * (Vector.x*zamzc - xamxc * Vector.z) + zamzb * (xamxc*Vector.y - yamyc * Vector.x);
+
+
+	auto t = - (zamzc *(xamxb*yamye - xamxe * yamyb) + yamyc * (xamxe*zamzb - xamxb * zamze) + xamxc * (yamyb*zamze - yamye * zamzb)) / M;
+
+	if (t < 0) return 0;
+	
+	auto gamma = (Vector.z *(xamxb*yamye - xamxe * yamyb) + Vector.y*(xamxe*zamzb - xamxb * zamze) + Vector.x*(yamyb*zamze - yamye * zamzb)) / M;
+
+	if (gamma < 0 || gamma > 1) return false;
+
+	auto beta = (xamxe*(yamyc*Vector.z - Vector.y*zamzc) + yamye * (Vector.x*zamzc - xamxc * Vector.z) + zamze * (xamxc*Vector.y - yamyc * Vector.x)) / M;
+
+	if (beta < 0 || beta > 1 - gamma) return false;
+
+	return true;
+	
 }
 
 double propagation::fresnel(double const uz, material const * mat_) const 
@@ -182,9 +227,8 @@ void propagation::update_arr_bucket(photonstruct const * photon, output * out_)
 
 }
 
-void propagation::write_to_logfile(output * out_, material const *  mat_, std::string const path, std::string const csv_path) const
+void propagation::write_to_logfile(output * out_, material const *  mat_, std::string const path, std::string const csv_path, mcml::MCMLParser &mc) const
 {
-	auto mc = mcml::MCMLParser("C://Users//Tim//Documents//WISE17_18//Bachelor//FirstPrototype//mcml_test//bli.txt");
 	std::ofstream fout(path, std::ofstream::trunc);
 	std::ofstream ccout(csv_path, std::ofstream::trunc);
 

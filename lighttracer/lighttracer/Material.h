@@ -12,6 +12,5 @@ struct material
 	const float rusroul;
 	//the material in which we move
 	layer *matproperties;
-
 	
 };

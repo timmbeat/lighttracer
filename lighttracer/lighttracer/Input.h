@@ -13,4 +13,6 @@ struct output
 	//double ref[ARRSIZEr][ARRSIZEa];
 	double delr;
 	double dela;
+
+	int kam_counter = 0;
 };
