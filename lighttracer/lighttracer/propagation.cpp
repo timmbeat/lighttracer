@@ -100,7 +100,7 @@ void propagation::trace(photonstruct * photon, output * out, material  const * m
 		{
 			update_arr_bucket(photon, out);
 			//If photon is out of the tissue
-			auto Tri = std::vector<glm::dvec3>{ glm::dvec3(-1.0, -1.0, -2.0) , glm::dvec3(1.0,-1.0, -2.0), glm::dvec3(0.0, 1.0, -2.0) };
+			/*auto Tri = std::vector<glm::dvec3>{ glm::dvec3(-1.0, -1.0, -2.0) , glm::dvec3(1.0,-1.0, -2.0), glm::dvec3(0.0, 1.0, -2.0) };
 			if(RayTriangle(photon->position, photon->direction, Tri) == 1)
 			{
 				
@@ -112,7 +112,7 @@ void propagation::trace(photonstruct * photon, output * out, material  const * m
 					std::cin.get();
 				}
 			}
-
+*/
 			photon->dead = true;
 		}
 	}

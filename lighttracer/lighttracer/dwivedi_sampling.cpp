@@ -4,11 +4,15 @@
 #include "constants.h"
 #include "mcml_parser.h"
 #include <iostream>
+#include "gtc/constants.hpp"
 
+#define GLM_ENABLE_EXPERIMENTAL
+
+#include "gtx/norm.hpp"
+
+#include "gtx/vector_angle.hpp"
 struct dviwedi dvi;
 extern struct renderoptions render;
-
-
 
 
 void dwivedi_sampling::run(const std::string mcml_path)
@@ -73,7 +77,10 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 	auto const sint = sqrt(1 - wz * wz);
     auto const cosp = cos(y);
 	double sinp;
+	auto const ux = photon->direction.x;
+	auto const uy = photon->direction.y;
 	auto const uz = photon->direction.z;
+	auto const direction_old = photon->direction;
 	if (y < slabProfiles::pi<double>())
 	{
 		sinp = sqrt(1.0 - cosp * cosp);
@@ -85,35 +92,66 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 
 		photon->direction.x = sint * cosp;
 		photon->direction.y = sint * sinp;
-		photon->direction.z = glm::sign(uz)*wz;
+		photon->direction.z = glm::sign(uz) * wz;
 
 
-		//photon->weight = 0.5 * photon->weight;
-		//????????
 
-		//photon->weight = photon->weight * 0.5 / scattering_function(mat->matproperties->v0, wz);
 
-		//photon->weight = photon->weight * scattering_function_hg(mat->matproperties->anisotropy, uz) / fabs(wz);
-		photon->weight = photon->weight * scattering_function_hg(mat->matproperties->anisotropy, wz) / fabs(wz);
+		auto const direction_new = photon->direction;
+		auto const dot = glm::dot(direction_new, direction_old);
+		auto const dot_theta = dot / (glm::length2(direction_old) * glm::length2(direction_new));
+		auto const hg = scattering_function_hg(mat->matproperties->anisotropy, dot_theta); //Bis hier hin ist es richtig!
+	
+
+		auto dwi = scattering_function(mat->matproperties->v0, wz);
+
+
+
+		auto tmp = hg / dwi;
+		if (tmp > 1) tmp = 1;
+		auto new_weight = photon->weight * tmp;
+		photon->weight = new_weight;
+
+
+		//if (photon->weight > 1 || photon->weight == NAN)
+		//{
+		//	if (photon->weight == NAN) std::cout << "ERROR::PHOTON WEIGHT = NAN" << std::endl;
+
+		//	else
+		//	{
+		//		std::cout << "ERROR:::PHOTON TO HEAVY " << photon->weight << std::endl;
+		//		std::cout << "HENVEY GREENSTEIN::: " << hg << "  DWIVEDI::: " << dwi <<std::endl;
+		//		std::cout << tmp << std::endl;
+		//		std::cin.get();
+		//	}
+		//}
+		//if(photon->weight > 1.0 || hg < 0.0)
+		//{
+		//	std::cout << "HG " << hg << " DWI " << dwi << std::endl;
+		//	//std::cin.get();
+		//}
+
 		//photon->weight = photon->weight *  scattering_function_hg(mat->matproperties->anisotropy, uz) / wz;
+
+
 }
 
 
-double dwivedi_sampling::scattering_function(double const v0, double const wz)
+double dwivedi_sampling::scattering_function(double const v0, double const wz_)
 {
-	auto const res = 1 / log((v0 + 1) / (v0 - 1)) * 1 / (v0 - wz);
-	if (res < 0) std::cout << "!!!!!!!!!!!!";
-
+	auto const res = 1 / log((v0 + 1) / (v0 - 1)) * 1 / (v0 - wz_);
 	return res;
 
 }
 
-double dwivedi_sampling::scattering_function_hg(double const g, double const wz)
+double dwivedi_sampling::scattering_function_hg(double const g, double const theta)
 {
 	auto const qg = g * g;
-	auto const res = (1 - qg) / (2 * pow((2 * (1 + qg - 2 * g*wz)), 3 / 2));
+
+	auto const res = (1 - qg) / (2 * pow(1 + qg - 2 * g * theta, 3 / 2));
+
+	//auto const res = (1 - qg) / (2 * pow(1 + qg - 2 * g * theta, 3 / 2));
+
 	return res;
-
-
 }
 

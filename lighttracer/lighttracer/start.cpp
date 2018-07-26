@@ -5,8 +5,8 @@
 
 /**
  * Created by Tim Mend.
- * You can use as input either
- * mcml_examples/example_1.txt or mcml_examples/example_2.txt
+ * See folder "mcml_examples" for possible input files
+ * 
  */
 
 
