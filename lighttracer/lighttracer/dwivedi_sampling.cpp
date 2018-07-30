@@ -13,8 +13,9 @@
 #include "gtx/vector_angle.hpp"
 struct dviwedi dvi;
 extern struct renderoptions render;
-
-
+double dwivedi_distribution(double wz, double v0, double mu_t, double t);
+double classical_distribution(double mu_t, double t);
+double classical_stepsize(double t, double mu_t);
 void dwivedi_sampling::run(const std::string mcml_path)
 {
 	//Parsing the Result of mcml
@@ -50,6 +51,7 @@ void dwivedi_sampling::run(const std::string mcml_path)
 
 double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat) 
 {
+	
 	auto const v0 = mat->matproperties->v0;
 	auto const v0_1 = mat->matproperties->v0 + 1;
 
@@ -58,17 +60,62 @@ double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat
 	
 	photon->wz = wz;
 	
+	auto const ran = random();
 	
-	return (-log(1 - random())) / ((1 - wz / mat->matproperties->v0)*(mat->matproperties->scattering + mat->matproperties->absorption));
+	auto const dwistepsize = (-log(1 - ran)) /
+		((1 - wz /
+		  mat->matproperties->v0)*
+		  (mat->matproperties->scattering + mat->matproperties->absorption));
+
+	
+	///////////////////////////////////////////////////////////////////////////
+	//////////////////////////Anisotropic Material/////////////////////////////
+	///////////////////////////////////////////////////////////////////////////
+	auto const mu_t = mat->matproperties->mu_t;
+
+	//This will yield, when isotropic materials given, a bad approximation to the true result. 
+	//The curve will have strong Oszillation
+	auto const new_weight = photon->weight * classical_distribution(mu_t, dwistepsize) /
+		dwivedi_distribution(wz, v0, mu_t, dwistepsize);
+    
+
+	
+
+	photon->weight = new_weight;
+
+	////////////////////////////////////////////////////////////////////////////
+
+	return dwistepsize;
 }
 
+double dwivedi_distribution(double wz, double v0, double mu_t, double t)
+{
+	
+	return exp(-(1 - wz / v0)*mu_t*t);
 
+	//This will yield a terrible solution
+	//return (1 - wz / v0)*mu_t*exp(-(1 - wz / v0)*mu_t*t);
+
+}
+
+double classical_distribution(double const mu_t, double const t)
+{
+	
+	return exp(-mu_t * t);
+	//This will yield a terrible solution
+	//return (1/-mu_t)*exp(-mu_t * t);
+}
 
 double dwivedi_sampling::getv0(double const   alpha)
 {
 	return alpha > 0.56 ? dvi.get_highv0(alpha) : dvi.get_lowv0(alpha);
 }
 
+
+double classical_stepsize(double const t, double const mu_t)
+{
+	return -log(t) / mu_t;
+}
 
 void dwivedi_sampling::update_direction(photonstruct* photon, material const* mat)
 {
@@ -92,14 +139,13 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 
 		photon->direction.x = sint * cosp;
 		photon->direction.y = sint * sinp;
-		photon->direction.z = glm::sign(uz) * wz;
+		photon->direction.z = glm::sign(uz)* wz;
 
 
-
-
+	
 		auto const direction_new = photon->direction;
 		auto const dot = glm::dot(direction_new, direction_old);
-		auto const dot_theta = dot / (glm::length2(direction_old) * glm::length2(direction_new));
+		auto const dot_theta = dot / (glm::length(direction_old) * glm::length(direction_new));
 		auto const hg = scattering_function_hg(mat->matproperties->anisotropy, dot_theta); //Bis hier hin ist es richtig!
 	
 
@@ -108,8 +154,11 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 
 
 		auto tmp = hg / dwi;
-		if (tmp > 1) tmp = 1;
+		//if (tmp > 1) tmp = 1; //Kritisch
+	
 		auto new_weight = photon->weight * tmp;
+
+
 		photon->weight = new_weight;
 
 
@@ -139,7 +188,7 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 
 double dwivedi_sampling::scattering_function(double const v0, double const wz_)
 {
-	auto const res = 1 / log((v0 + 1) / (v0 - 1)) * 1 / (v0 - wz_);
+	auto const res = (1 / log((v0 + 1) / (v0 - 1))) * (1 / (v0 - wz_));
 	return res;
 
 }

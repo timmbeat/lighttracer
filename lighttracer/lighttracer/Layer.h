@@ -20,6 +20,7 @@ struct layer
 	double absorption;
 	double scattering;
 	double anisotropy;
+	double mu_t = scattering + absorption;
 	double v0;
 	double reflec;
 
