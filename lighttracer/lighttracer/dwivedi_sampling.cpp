@@ -70,17 +70,18 @@ double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat
 	
 	///////////////////////////////////////////////////////////////////////////
 	//////////////////////////Anisotropic Material/////////////////////////////
-	///////////////////////////////////////////////////////////////////////////
+	/////////////////////////////////////////////////////////////////////////
+	
 	auto const mu_t = mat->matproperties->mu_t;
+
 
 	//This will yield, when isotropic materials given, a bad approximation to the true result. 
 	//The curve will have strong Oszillation
 	auto const new_weight = photon->weight * classical_distribution(mu_t, dwistepsize) /
 		dwivedi_distribution(wz, v0, mu_t, dwistepsize);
-    
+	   
 
 	
-
 	photon->weight = new_weight;
 
 	////////////////////////////////////////////////////////////////////////////
@@ -91,19 +92,15 @@ double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat
 double dwivedi_distribution(double wz, double v0, double mu_t, double t)
 {
 	
-	return exp(-(1 - wz / v0)*mu_t*t);
+	//return exp(-(1 - wz / v0)*mu_t*t);
 
-	//This will yield a terrible solution
-	//return (1 - wz / v0)*mu_t*exp(-(1 - wz / v0)*mu_t*t);
+	return (1 - wz / v0)*mu_t*exp(-(1 - wz / v0)*mu_t*t);
 
 }
 
 double classical_distribution(double const mu_t, double const t)
 {
-	
-	return exp(-mu_t * t);
-	//This will yield a terrible solution
-	//return (1/-mu_t)*exp(-mu_t * t);
+	return mu_t*exp(-mu_t * t);
 }
 
 double dwivedi_sampling::getv0(double const   alpha)
@@ -154,7 +151,6 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 
 
 		auto tmp = hg / dwi;
-		//if (tmp > 1) tmp = 1; //Kritisch
 	
 		auto new_weight = photon->weight * tmp;
 
@@ -198,8 +194,6 @@ double dwivedi_sampling::scattering_function_hg(double const g, double const the
 	auto const qg = g * g;
 
 	auto const res = (1 - qg) / (2 * pow(1 + qg - 2 * g * theta, 3 / 2));
-
-	//auto const res = (1 - qg) / (2 * pow(1 + qg - 2 * g * theta, 3 / 2));
 
 	return res;
 }

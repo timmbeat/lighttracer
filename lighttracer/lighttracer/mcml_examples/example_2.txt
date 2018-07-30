@@ -11,7 +11,7 @@ A1 	# Version number of the file format.
 
 InParm 			# Input parameters. cm is used.
 bli.txt 	A		# output file name, ASCII.
-100000 0			# No. of photons
+1000000 0			# No. of photons
 0.0001	0.0001		# dz, dr [cm]
 1	100	1	# No. of dz, dr, da.
 
