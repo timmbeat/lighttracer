@@ -183,7 +183,6 @@ double propagation::fresnel(double const uz, material const * mat_) const
 	else
 	{
 		auto const sa1 = sqrt(1 - uz * uz);
-		//TODO: THIS LITTLE ONE HERE WAS THE MISTAKE ALL ALONG
 		auto const sa2 = mat_->matproperties->refrac * sa1;
 		/*
 		 * OLD ONE: auto const sa2 = uz * sa1..

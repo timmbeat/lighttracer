@@ -1,5 +1,6 @@
 #pragma once
 #include "layer.h"
+#include <memory>
 
 struct material
 {
@@ -11,6 +12,6 @@ struct material
 	const double wth;
 	const float rusroul;
 	//the material in which we move
-	layer *matproperties;
+	layer *  matproperties;
 	
 };
