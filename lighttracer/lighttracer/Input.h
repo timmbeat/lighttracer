@@ -14,5 +14,9 @@ struct output
 	double delr;
 	double dela;
 
+	double sum;
+
+	bool sum_set = false;
+
 	int kam_counter = 0;
 };

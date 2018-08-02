@@ -69,6 +69,7 @@ namespace mcml
 		std::size_t get_numphotons() const;
 		double get_dr_() const;
 		double get_dz_() const;
+		double get_diffuse_reflectance() const;
 		// const std::vector<double>& GetRadiusValues() const { return rValues_; }
 		// const std::vector<double>& GetRadialReflectionProfile() const { return rProfileR_; }
 		// const std::vector<double>& GetRadialTransmissionProfile() const { return tProfileR_; }

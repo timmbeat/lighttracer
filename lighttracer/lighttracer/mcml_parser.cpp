@@ -82,6 +82,11 @@ namespace mcml
 		return dz_;
 	}
 
+	double MCMLParser::get_diffuse_reflectance() const
+	{
+		return diffuseReflectance_;
+	}
+
 	void MCMLParser::SmoothData()
 	{
 		rProfileRSmooth_.resize(rProfileR_.size());

@@ -11,6 +11,7 @@
 #include "gtx/norm.hpp"
 
 #include "gtx/vector_angle.hpp"
+#include "Logger.h"
 struct dviwedi dvi;
 extern struct renderoptions render;
 double dwivedi_distribution(double wz, double v0, double mu_t, double t);
@@ -23,7 +24,7 @@ void dwivedi_sampling::run(const std::string mcml_path)
 	auto const layer_mcml = mc.GetLayers();
 	auto const layer_0 = layer_mcml[0];
  
-
+	Logger log{};
 	//Create layer and Material, these are the rendering options
 	layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
 	material material1(mc.get_numphotons(), render.wth, 0.1, &lay);
@@ -42,7 +43,10 @@ void dwivedi_sampling::run(const std::string mcml_path)
 			}
 		}
 	}
-	write_to_logfile(&out, &material1, "dwivedi_logfile.txt", "dwivedi_output.csv", mc);
+
+	log.create_PlotFile(mc, out, "dwivedi_output.csv", material1);
+	log.create_RenderFile(mc, out, "dwivedi_logfile.txt", material1);
+	//write_to_logfile(&out, &material1, "dwivedi_logfile.txt", "dwivedi_output.csv", mc);
 
 
 }
@@ -197,4 +201,42 @@ double dwivedi_sampling::scattering_function_hg(double const g, double const the
 
 	return res;
 }
+
+void dwivedi_sampling::cal_absorption(photonstruct* photon, material const* mat_) const
+{
+	auto const tmp = photon->weight * mat_->matproperties->absorption / ((1-photon->wz/mat_->matproperties->v0)*mat_->matproperties->mu_t);
+	photon->weight -= tmp;
+}
+
+bool dwivedi_sampling::is_hit(photonstruct* photon, material const* mat_)
+{
+	//TODO: Test for both sampling sampling_scheme
+
+	if (photon->sleft == 0.0)
+	{
+		photon->step = cal_stepsize(photon, mat_);
+	}
+	else
+	{
+		photon->step = photon->sleft / ((1 - photon->wz / mat_->matproperties->v0)*mat_->matproperties->mu_t);
+		photon->sleft = 0.0;
+	}
+
+
+	if (photon->direction.z < 0.0)
+	{
+		auto const s1 = -photon->position.z / photon->direction.z;
+		//No check for lower boundery, because there is none
+		if (s1 < photon->step && photon->direction.z != 0.0)
+		{
+			photon->sleft = (photon->step - s1)*((1 - photon->wz / mat_->matproperties->v0)*mat_->matproperties->mu_t);
+			photon->step = s1;
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
 

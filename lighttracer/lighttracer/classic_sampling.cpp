@@ -4,6 +4,7 @@
 #include "constants.h"
 #include "mcml_parser.h"
 #include "config.h"
+#include "Logger.h"
 
 extern struct renderoptions render;
 classic_sampling::classic_sampling()
@@ -21,6 +22,7 @@ void classic_sampling::run(const std::string mcml_path)
 	auto const layer_mcml = mc.GetLayers();
 	auto const layer_0 = layer_mcml[0];
 
+	Logger log{};
 
 	//Create layer and Material, these are the rendering options
 	layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, 0);
@@ -41,8 +43,8 @@ void classic_sampling::run(const std::string mcml_path)
 			}
 		}
 	}
-	write_to_logfile(&out, &material1, "logfile.txt", "output.csv", mc);
-
+	log.create_RenderFile(mc, out, "logfile.txt", material1);
+	log.create_PlotFile(mc, out, "output.csv", material1);
 
 }
 
