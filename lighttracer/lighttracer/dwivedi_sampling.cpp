@@ -19,11 +19,12 @@ double classical_distribution(double mu_t, double t);
 double classical_stepsize(double t, double mu_t);
 void dwivedi_sampling::run(const std::string mcml_path)
 {
+	
 	//Parsing the Result of mcml
 	auto mc = mcml::MCMLParser(mcml_path);
 	auto const layer_mcml = mc.GetLayers();
 	auto const layer_0 = layer_mcml[0];
- 
+
 	Logger log{};
 	//Create layer and Material, these are the rendering options
 	layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
@@ -39,6 +40,7 @@ void dwivedi_sampling::run(const std::string mcml_path)
 			trace(&photon, &out, &material1);
 			if (photon.weight < material1.wth && !photon.dead)
 			{
+				
 				roulette(&photon, &material1);
 			}
 		}
@@ -121,6 +123,14 @@ double classical_stepsize(double const t, double const mu_t)
 void dwivedi_sampling::update_direction(photonstruct* photon, material const* mat)
 {
 	auto const wz = photon->wz;
+
+	auto const g = mat->matproperties->anisotropy;
+	auto scattering = 0.0;
+	if (g != 0.0)
+	{
+		auto const temp = (1 - g * g) / (1 - g + 2 * g * random());
+		scattering = (1 + g * g - temp * temp) / (2 * g);
+	}
 	auto const y = 2 * slabProfiles::pi<double>() * random();
 	auto const sint = sqrt(1 - wz * wz);
     auto const cosp = cos(y);
@@ -140,60 +150,47 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 
 		photon->direction.x = sint * cosp;
 		photon->direction.y = sint * sinp;
-		photon->direction.z = glm::sign(uz)* wz;
+		photon->direction.z = glm::sign(uz) * wz;
 
 
 	
 		auto const direction_new = photon->direction;
 		auto const dot = glm::dot(direction_new, direction_old);
 		auto const dot_theta = dot / (glm::length(direction_old) * glm::length(direction_new));
-		auto const hg = scattering_function_hg(mat->matproperties->anisotropy, dot_theta); //Bis hier hin ist es richtig!
-	
+		
+		auto const hg = directional_distribution_hg(mat->matproperties->anisotropy, scattering); //Bis hier hin ist es richtig!
 
-		auto dwi = scattering_function(mat->matproperties->v0, wz);
-
+		auto dwi = directional_distribution_dwi(mat->matproperties->v0, wz);
+		
 
 
 		auto tmp = hg / dwi;
-	
+		std::cout << tmp;
+		std::cin.get();
 		auto new_weight = photon->weight * tmp;
 
-
+	
 		photon->weight = new_weight;
 
-
-		//if (photon->weight > 1 || photon->weight == NAN)
-		//{
-		//	if (photon->weight == NAN) std::cout << "ERROR::PHOTON WEIGHT = NAN" << std::endl;
-
-		//	else
-		//	{
-		//		std::cout << "ERROR:::PHOTON TO HEAVY " << photon->weight << std::endl;
-		//		std::cout << "HENVEY GREENSTEIN::: " << hg << "  DWIVEDI::: " << dwi <<std::endl;
-		//		std::cout << tmp << std::endl;
-		//		std::cin.get();
-		//	}
-		//}
-		//if(photon->weight > 1.0 || hg < 0.0)
-		//{
-		//	std::cout << "HG " << hg << " DWI " << dwi << std::endl;
-		//	//std::cin.get();
-		//}
-
-		//photon->weight = photon->weight *  scattering_function_hg(mat->matproperties->anisotropy, uz) / wz;
 
 
 }
 
 
-double dwivedi_sampling::scattering_function(double const v0, double const wz_)
+double dwivedi_sampling::directional_distribution_dwi(double const v0, double const wz_)
 {
 	auto const res = (1 / log((v0 + 1) / (v0 - 1))) * (1 / (v0 - wz_));
 	return res;
 
 }
 
-double dwivedi_sampling::scattering_function_hg(double const g, double const theta)
+
+/*
+ * This cannot work with anisotropic Material, and here is why. If i use anisotropic material i will Integrate a different function!
+ * If g = 0 then in both implementations i use the function 1/2 else i will use two different distributet angles for theta. This results
+ * in different function and so in different Integrals. 
+ */
+double dwivedi_sampling::directional_distribution_hg(double const g, double const theta)
 {
 	auto const qg = g * g;
 
@@ -204,13 +201,15 @@ double dwivedi_sampling::scattering_function_hg(double const g, double const the
 
 void dwivedi_sampling::cal_absorption(photonstruct* photon, material const* mat_) const
 {
-	auto const tmp = photon->weight * mat_->matproperties->absorption / ((1-photon->wz/mat_->matproperties->v0)*mat_->matproperties->mu_t);
+
+	auto path_mean = 1 / ((1 - photon->wz / mat_->matproperties->v0)*mat_->matproperties->mu_t);
+	auto const tmp = photon->weight *mat_->matproperties->absorption  * path_mean;
+
 	photon->weight -= tmp;
 }
 
 bool dwivedi_sampling::is_hit(photonstruct* photon, material const* mat_)
 {
-	//TODO: Test for both sampling sampling_scheme
 
 	if (photon->sleft == 0.0)
 	{

@@ -1,101 +1,12 @@
-2201.85    ir 0 ia 0
-712.089    ir 1 ia 0
-413.437    ir 2 ia 0
-298.662    ir 3 ia 0
-223.166    ir 4 ia 0
-201.23     ir 5 ia 0
-169.958    ir 6 ia 0
-147.722    ir 7 ia 0
-120.328    ir 8 ia 0
-114.301    ir 9 ia 0
-104.373    ir 10 ia 0
-89.3134    ir 11 ia 0
-89.6783    ir 12 ia 0
-83.2067    ir 13 ia 0
-78.0888    ir 14 ia 0
-72.6805    ir 15 ia 0
-67.8568    ir 16 ia 0
-57.6613    ir 17 ia 0
-55.3897    ir 18 ia 0
-52.9933    ir 19 ia 0
-48.9596    ir 20 ia 0
-47.9604    ir 21 ia 0
-45.2763    ir 22 ia 0
-42.4049    ir 23 ia 0
-37.8803    ir 24 ia 0
-39.043     ir 25 ia 0
-36.2869    ir 26 ia 0
-34.0007    ir 27 ia 0
-31.3128    ir 28 ia 0
-28.2932    ir 29 ia 0
-29.6797    ir 30 ia 0
-26.014     ir 31 ia 0
-24.6922    ir 32 ia 0
-23.3327    ir 33 ia 0
-22.2118    ir 34 ia 0
-22.5649    ir 35 ia 0
-20.996     ir 36 ia 0
-19.461     ir 37 ia 0
-19.3116    ir 38 ia 0
-17.6882    ir 39 ia 0
-17.1062    ir 40 ia 0
-15.5717    ir 41 ia 0
-15.6928    ir 42 ia 0
-15.2995    ir 43 ia 0
-13.9327    ir 44 ia 0
-13.3532    ir 45 ia 0
-13.1944    ir 46 ia 0
-12.6505    ir 47 ia 0
-12.1752    ir 48 ia 0
-12.3199    ir 49 ia 0
-11.0429    ir 50 ia 0
-10.1161    ir 51 ia 0
-10.7376    ir 52 ia 0
-9.8371     ir 53 ia 0
-9.381      ir 54 ia 0
-8.54703    ir 55 ia 0
-8.24029    ir 56 ia 0
-7.90405    ir 57 ia 0
-7.88936    ir 58 ia 0
-7.39289    ir 59 ia 0
-6.49342    ir 60 ia 0
-7.10313    ir 61 ia 0
-6.84085    ir 62 ia 0
-6.01765    ir 63 ia 0
-5.81592    ir 64 ia 0
-6.25786    ir 65 ia 0
-5.24444    ir 66 ia 0
-5.14961    ir 67 ia 0
-5.25207    ir 68 ia 0
-4.89509    ir 69 ia 0
-5.05516    ir 70 ia 0
-4.76485    ir 71 ia 0
-4.39934    ir 72 ia 0
-4.34729    ir 73 ia 0
-3.88314    ir 74 ia 0
-3.762      ir 75 ia 0
-3.94882    ir 76 ia 0
-3.36245    ir 77 ia 0
-3.4018     ir 78 ia 0
-3.20644    ir 79 ia 0
-3.2489     ir 80 ia 0
-3.05574    ir 81 ia 0
-3.01072    ir 82 ia 0
-2.6133     ir 83 ia 0
-2.71193    ir 84 ia 0
-2.69415    ir 85 ia 0
-2.41473    ir 86 ia 0
-2.44037    ir 87 ia 0
-2.53923    ir 88 ia 0
-2.12545    ir 89 ia 0
-2.15296    ir 90 ia 0
-2.30725    ir 91 ia 0
-2.11621    ir 92 ia 0
-1.86145    ir 93 ia 0
-1.9435     ir 94 ia 0
-1.85888    ir 95 ia 0
-1.72085    ir 96 ia 0
-1.80104    ir 97 ia 0
-1.8052     ir 98 ia 0
-66.4157    ir 99 ia 0
-WEIGHT OF TRANSMITTANCE 0.424415
+IN THIS FILE YOU FIND INFORMATION ABOUT THE LAST SUCCESFUL RUN 
+THIS RUN WAS SUCCESFUL ON Mon Aug  6 03:26:38 2018
+
+
+
+MY TRANSMITTANCE 0.423664       MCML TRANSMITTANCE 0.423974
+ 
+
+SCATTERING COEFFICIENT        200  
+ABSORPTION COEFFICIENT        2    
+ANISOTROPY                    0.7  
+

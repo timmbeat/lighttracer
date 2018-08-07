@@ -18,6 +18,6 @@ int main()
 	classic.run("mcml_examples/example_2.txt");
 */
 	dwivedi_sampling dwivedi{};
-	dwivedi.run("mcml_examples/example_3.txt");
+	dwivedi.run("mcml_examples/example_2.txt");
 
 }
