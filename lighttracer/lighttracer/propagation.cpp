@@ -211,6 +211,7 @@ double propagation::fresnel(double const uz, material const * mat_) const
 
 void propagation::update_arr_bucket(photonstruct const * photon, output * out_)
 {
+	//auto ir = tan(photon->wz_new) * sqrt(photon->position.x * photon->position.x + photon->position.y * photon->position.y);
 	auto ir = static_cast<int>(sqrt(photon->position.x * photon->position.x + photon->position.y * photon->position.y)
 							   / out_->delr);
 	if (ir > out_->bins_r - 1) ir = out_->bins_r - 1;

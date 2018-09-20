@@ -4,7 +4,7 @@
 
 #include "propagation.h"
 
-class classic_sampling : propagation
+class classic_sampling : public propagation
 {
 	public:
 	classic_sampling();

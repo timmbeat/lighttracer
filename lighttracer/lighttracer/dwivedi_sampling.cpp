@@ -6,17 +6,23 @@
 #include <iostream>
 #include "gtc/constants.hpp"
 
-#define GLM_ENABLE_EXPERIMENTAL
 
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <gtx/string_cast.hpp>
 #include "gtx/norm.hpp"
 
 #include "gtx/vector_angle.hpp"
 #include "Logger.h"
+#include <fstream>
+#include "classic_sampling.h"
 struct dviwedi dvi;
 extern struct renderoptions render;
 double dwivedi_distribution(double wz, double v0, double mu_t, double t);
 double classical_distribution(double mu_t, double t);
 double classical_stepsize(double t, double mu_t);
+double anpassung(double wz, double v0);
+double sampleThetaclas(double anisotropy);
 void dwivedi_sampling::run(const std::string mcml_path)
 {
 	
@@ -24,30 +30,83 @@ void dwivedi_sampling::run(const std::string mcml_path)
 	auto mc = mcml::MCMLParser(mcml_path);
 	auto const layer_mcml = mc.GetLayers();
 	auto const layer_0 = layer_mcml[0];
-
+	classic_sampling clas{};
 	Logger log{};
 	//Create layer and Material, these are the rendering options
 	layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
-	material material1(mc.get_numphotons(), render.wth, 0.1, &lay);
-	output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
+	const material material1(mc.get_numphotons(), render.wth, 0.1, &lay);
 	
 	//Create prop class for Rendering
-	for (auto i = 0; i < material1.num_photons; i++)
+	std::ofstream ccout("./plot/manyplots.csv", std::ofstream::trunc);
+	std::stringstream csvout;
+	csvout << std::setw(15) << std::left << "DWIVEDI" << std::setw(15) << std::left << "CLASSICAL" << "RUN";
+	ccout << csvout.str() << std::endl;
+
+	output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
+	output out_clas(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
+
+	csvout.str("");
+	auto runs = 100;
+
+	std::vector<double> sums;
+
+	for (auto z = 0; z < runs; z++)
 	{
-		photonstruct photon(1 - lay.reflec, false);
-		while (!photon.dead)
+
+		out = output(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
+		out_clas = output(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
+
+		for (auto i = 0; i < material1.num_photons; i++)
 		{
-			trace(&photon, &out, &material1);
-			if (photon.weight < material1.wth && !photon.dead)
+			photonstruct photon(1 - lay.reflec, false);
+			photonstruct photon_clas(1 - lay.reflec, false);
+			while (!photon.dead)
+			{
+				trace(&photon, &out, &material1);
+				if (photon.weight < material1.wth && !photon.dead)
+				{
+
+					roulette(&photon, &material1);
+				}
+		
+
+			}
+		
+			while (!photon_clas.dead)
 			{
 				
-				roulette(&photon, &material1);
+				clas.trace(&photon_clas, &out_clas, &material1);
+				if (photon_clas.weight < material1.wth && !photon_clas.dead)
+				{
+
+					roulette(&photon_clas, &material1);
+				}
+			
 			}
-		}
 	}
 
-	log.create_PlotFile(mc, out, "dwivedi_output.csv", material1);
-	log.create_RenderFile(mc, out, "dwivedi_logfile.txt", material1);
+		auto dsum = 0.0;
+		auto csum = 0.0;
+		for (auto k = 0; k < out.bins_r; k++)
+		{
+			dsum += out.Rd_r[k][0];
+		
+			csum += out_clas.Rd_r[k][0];
+
+		
+		}
+		//sums.push_back(dsum);
+		csvout << std::setw(15) << std::left << dsum/material1.num_photons << std::setw(15) << std::left << csum/ material1.num_photons << z << " " << dsum/csum;
+		ccout << csvout.str() <<std::endl;
+		csvout.str("");
+		std::cout << "RUN" << " " << z << std::endl;
+	}
+	//std::sort(sums.begin(), sums.end());
+
+	//std::cout << abs(1.0-(sums[0] / sums[sums.size()-1]));
+	log.create_PlotFile(mc, out, "plot/dwivedi_output.csv", material1);
+	//log.create_RenderFile(mc, out_clas, "plot/logfile.txt", material1);
+	log.create_RenderFile(mc, out, "plot/dwivedi_logfile.txt", material1);
 	//write_to_logfile(&out, &material1, "dwivedi_logfile.txt", "dwivedi_output.csv", mc);
 
 
@@ -63,13 +122,14 @@ double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat
 
 	//Immer negativ!
 	auto const wz = v0 - v0_1 * pow((v0 - 1) / v0_1, random());
-	
-	photon->wz = wz;
+
+	photon->wz_old = photon->wz_new;
+	photon->wz_new = wz;
 	
 	auto const ran = random();
 	
 	auto const dwistepsize = (-log(1 - ran)) /
-		((1 - wz /
+		((1 - photon->wz_old /
 		  mat->matproperties->v0)*
 		  (mat->matproperties->scattering + mat->matproperties->absorption));
 
@@ -83,22 +143,48 @@ double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat
 
 	//This will yield, when isotropic materials given, a bad approximation to the true result. 
 	//The curve will have strong Oszillation
-	auto const new_weight = photon->weight * classical_distribution(mu_t, dwistepsize) /
-		dwivedi_distribution(wz, v0, mu_t, dwistepsize);
-	   
+	auto new_weight = photon->weight * classical_distribution(mu_t, dwistepsize) /
+		dwivedi_distribution(photon->wz_old, v0, mu_t, dwistepsize);
 
-	
-	photon->weight = new_weight;
+
+	/*auto const new_weight = photon->weight * anpassung(wz, v0);
+	*/
+	//photon->weight = new_weight;
 
 	////////////////////////////////////////////////////////////////////////////
 
 	return dwistepsize;
 }
 
+double sampleThetaclas(double anisotropy)
+{
+	double scattering;
+	if (anisotropy == 0.0)
+	{
+
+		scattering = 2 * random() - 1;
+	}
+	else
+	{
+		auto const g = anisotropy;
+		auto const temp = (1 - g * g) / (1 - g + 2 * g * random());
+		scattering = (1 + g * g - temp * temp) / (2 * g);
+	}
+
+
+	return scattering;
+}
+
+
+double anpassung(double wz, double v0)
+{
+	return (1 - wz / v0)*exp((1 - wz / v0));
+}
+
 double dwivedi_distribution(double wz, double v0, double mu_t, double t)
 {
 	
-	//return exp(-(1 - wz / v0)*mu_t*t);
+	//return exp(-(1 - wz_new / v0)*mu_t*t);
 
 	return (1 - wz / v0)*mu_t*exp(-(1 - wz / v0)*mu_t*t);
 
@@ -122,52 +208,60 @@ double classical_stepsize(double const t, double const mu_t)
 
 void dwivedi_sampling::update_direction(photonstruct* photon, material const* mat)
 {
-	auto const wz = photon->wz;
+	auto wz = photon->wz_new;
 
 	auto const g = mat->matproperties->anisotropy;
-	auto scattering = 0.0;
-	if (g != 0.0)
-	{
-		auto const temp = (1 - g * g) / (1 - g + 2 * g * random());
-		scattering = (1 + g * g - temp * temp) / (2 * g);
-	}
+	auto const v0 = mat->matproperties->v0;
+	//auto scattering = sampleThetaclas(g);
+
+	//auto const theta = acos(-wz);
 	auto const y = 2 * slabProfiles::pi<double>() * random();
-	auto const sint = sqrt(1 - wz * wz);
+	//auto const sint = sqrt(1 - wz * wz);
+	auto const sint = sqrt(1-wz*wz);
     auto const cosp = cos(y);
-	double sinp;
+	auto sinp = sqrt(1.0 - cosp*cosp);
 	auto const ux = photon->direction.x;
 	auto const uy = photon->direction.y;
 	auto const uz = photon->direction.z;
 	auto const direction_old = photon->direction;
-	if (y < slabProfiles::pi<double>())
-	{
-		sinp = sqrt(1.0 - cosp * cosp);
-	}
-	else
-	{
-		sinp = -sqrt(1.0 - cosp * cosp);
-	}
-
-		photon->direction.x = sint * cosp;
-		photon->direction.y = sint * sinp;
-		photon->direction.z = glm::sign(uz) * wz;
-
-
 	
+	
+	
+
+
+		if (y < slabProfiles::pi<double>())
+		{
+			sinp = sqrt(1.0 - cosp * cosp);
+		}
+		else
+		{
+			sinp = -sqrt(1.0 - cosp * cosp);
+		}
+
+			photon->direction.x = sint * cosp;
+			photon->direction.y = sint * sinp;
+			photon->direction.z = glm::sign(uz)*wz;
+
+
 		auto const direction_new = photon->direction;
 		auto const dot = glm::dot(direction_new, direction_old);
 		auto const dot_theta = dot / (glm::length(direction_old) * glm::length(direction_new));
-		
-		auto const hg = directional_distribution_hg(mat->matproperties->anisotropy, scattering); //Bis hier hin ist es richtig!
+		photon->directiont = dot_theta;
+
+		auto const cos_theta = dot_theta < 0.0 ? -1 - dot_theta : 1 - dot_theta;
+		auto const hg = directional_distribution_hg(mat->matproperties->anisotropy, cos_theta); //Bis hier hin ist es richtig!
+		auto const norm = glm::dvec3(0.0, 0.0, 1.0);
+		auto const dot_norm = glm::dot(norm, direction_new);
+		auto const dot_norm_theta = dot_norm / (glm::length(direction_new)*glm::length(norm));
+
+
 
 		auto dwi = directional_distribution_dwi(mat->matproperties->v0, wz);
 		
 
 
-		auto tmp = hg / dwi;
-		std::cout << tmp;
-		std::cin.get();
-		auto new_weight = photon->weight * tmp;
+		
+		auto new_weight = photon->weight * hg/dwi;
 
 	
 		photon->weight = new_weight;
@@ -184,17 +278,13 @@ double dwivedi_sampling::directional_distribution_dwi(double const v0, double co
 
 }
 
-
 /*
- * This cannot work with anisotropic Material, and here is why. If i use anisotropic material i will Integrate a different function!
- * If g = 0 then in both implementations i use the function 1/2 else i will use two different distributet angles for theta. This results
- * in different function and so in different Integrals. 
  */
 double dwivedi_sampling::directional_distribution_hg(double const g, double const theta)
 {
 	auto const qg = g * g;
 
-	auto const res = (1 - qg) / (2 * pow(1 + qg - 2 * g * theta, 3 / 2));
+	auto const res = (1 - qg) / (2 * pow(1 + qg - 2 * g * theta, 3.0 / 2.0));
 
 	return res;
 }
@@ -202,7 +292,7 @@ double dwivedi_sampling::directional_distribution_hg(double const g, double cons
 void dwivedi_sampling::cal_absorption(photonstruct* photon, material const* mat_) const
 {
 
-	auto path_mean = 1 / ((1 - photon->wz / mat_->matproperties->v0)*mat_->matproperties->mu_t);
+	auto path_mean = 1 / ((1 - photon->wz_old / mat_->matproperties->v0)*mat_->matproperties->mu_t);
 	auto const tmp = photon->weight *mat_->matproperties->absorption  * path_mean;
 
 	photon->weight -= tmp;
@@ -217,7 +307,7 @@ bool dwivedi_sampling::is_hit(photonstruct* photon, material const* mat_)
 	}
 	else
 	{
-		photon->step = photon->sleft / ((1 - photon->wz / mat_->matproperties->v0)*mat_->matproperties->mu_t);
+		photon->step = photon->sleft / ((1 - photon->wz_old / mat_->matproperties->v0)*mat_->matproperties->mu_t);
 		photon->sleft = 0.0;
 	}
 
@@ -228,7 +318,7 @@ bool dwivedi_sampling::is_hit(photonstruct* photon, material const* mat_)
 		//No check for lower boundery, because there is none
 		if (s1 < photon->step && photon->direction.z != 0.0)
 		{
-			photon->sleft = (photon->step - s1)*((1 - photon->wz / mat_->matproperties->v0)*mat_->matproperties->mu_t);
+			photon->sleft = (photon->step - s1)*((1 - photon->wz_old / mat_->matproperties->v0)*mat_->matproperties->mu_t);
 			photon->step = s1;
 
 			return true;
