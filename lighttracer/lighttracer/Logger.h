@@ -1,6 +1,6 @@
 #pragma once
 #include "mcml_parser.h"
-#include "Input.h"
+#include "output.h"
 
 struct material;
 

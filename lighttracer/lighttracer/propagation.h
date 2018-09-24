@@ -1,6 +1,6 @@
 #pragma once
 #include "material.h"
-#include "Input.h"
+#include "output.h"
 #include "Photon.h"
 #include <functional>
 #include <random>
@@ -15,10 +15,11 @@ class propagation
 	public:
 	virtual ~propagation() = default;
 
-	void virtual update_direction(photonstruct * photon, material const * mat) = 0;
+	void virtual update_direction(photonstruct * photon, material const * mat);
+	glm::dvec2 calculate_scattering(double anisotropy);
 	double virtual cal_stepsize(photonstruct * photon, material const * mat) = 0;
 	void virtual run(const std::string mcml_path) = 0;
-
+	double sampleClassicalDistribution(double const mu_t);
 
 	void virtual cal_absorption(photonstruct * photon, material const * mat_) const;
 	void move(photonstruct * photon);
@@ -31,10 +32,13 @@ class propagation
 
 	virtual bool is_hit(photonstruct * photon, material const * mat_);
 
-
+	double classical_path_distribution(double mu_t, double stepsize);
 	int RayTriangle(glm::dvec3 &Point, glm::dvec3 &Vector, std::vector<glm::dvec3> & Plane);
-	
+	double getThreshould() const;
 
+
+private:
+double const threshould_weight_ = 0.001;
 
 };
 

@@ -1,28 +1,5 @@
 #pragma once
 
-//Skin layer
-struct skin
-{
-	//Absorption coefficient for human skin according to https://www.spiedigitallibrary.org/journals/journal-of-biomedical-optics/volume-17/issue-9/090901/Optical-properties-of-human-skin/10.1117/1.JBO.17.9.090901.full
-	const double absorption = 0.025;
-	//Skin Scattering coefficient according to https://www.sciencedirect.com/science/article/pii/S0022202X15414836
-	const double scattering = 0.078;
-	const double anistropy = 0.6;
-	//Human skin refraction index according to http://bmlaser.physics.ecu.edu/literature/2006%2003_human%20skin%20index.pdf
-	const double refrac = 1.3686;
-	const double alpha = 0.969;
-	
-};
-
-struct renderoptions
-{
-	//minimal weight which photons can have
-	const double wth = 0.0001;
-	//Amount of photons
-	const long photons = 100000;
-
-};
-
 struct dviwedi
 {
 	

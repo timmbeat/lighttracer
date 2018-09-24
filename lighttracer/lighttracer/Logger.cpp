@@ -7,14 +7,10 @@
 #include <chrono>
 #include <iostream>
 
-Logger::Logger()
-{
-}
+Logger::Logger() = default;
 
 
-Logger::~Logger()
-{
-}
+Logger::~Logger() = default;
 
 void Logger::create_PlotFile(const mcml::MCMLParser& parser, output& values, const std::string& plotfile, const material &mat) const
 {
@@ -70,7 +66,7 @@ void Logger::create_PlotFile(const mcml::MCMLParser& parser, output& values, con
 void Logger::create_RenderFile(const mcml::MCMLParser& parser, output& values, const std::string& renderfile,
 							   const material& mat) const
 {
-	auto Transmittance = 0.0;
+	double transmittance;
 	std::ofstream renderFile(renderfile, std::ofstream::trunc);
 	std::stringstream out;
 
@@ -79,21 +75,21 @@ void Logger::create_RenderFile(const mcml::MCMLParser& parser, output& values, c
 	if (!values.sum_set)
 	{
 		auto sum = 0.0;
-		for (auto i = 0; i < values.Rd_r.size(); i++)
+		for (std::size_t i = 0; i < values.Rd_r.size(); i++)
 		{
-			for (auto j = 0; j < values.Rd_r[0].size(); j++)
+			for (std::size_t j = 0; j < values.Rd_r[0].size(); j++)
 			{
 				sum += values.Rd_r[i][j];
 			}
 		}
 		values.sum = sum;
 		values.sum_set = true;
-		Transmittance = sum / mat.num_photons;
+		transmittance = sum / mat.num_photons;
 	}
 
 	else
 	{
-		Transmittance = values.sum / mat.num_photons;
+		transmittance = values.sum / mat.num_photons;
 	}
 
 	
@@ -104,13 +100,13 @@ void Logger::create_RenderFile(const mcml::MCMLParser& parser, output& values, c
 	out.str("");
 
 	//Write to File the Transmittance of mcml and the Transmittance of the Run
-	out << "MY TRANSMITTANCE " << std::setw(SETW_SIZE) << std::left << Transmittance << "MCML TRANSMITTANCE " << std::left << parser.get_diffuse_reflectance() << "\n \n" <<std::endl;
+	out << "MY TRANSMITTANCE " << std::setw(SETW_SIZE) << std::left << transmittance << "MCML TRANSMITTANCE " << std::left << parser.get_diffuse_reflectance() << "\n \n" <<std::endl;
 	renderFile << out.str();
 	out.str("");
 
 	//Write all information about the material
 	auto layers = parser.GetLayers();
-	auto layer = layers[0];
+	auto const layer = layers[0];
 
 	out << std::setw(FORMAT_30) << std::left << "SCATTERING COEFFICIENT " << std::setw(FORMAT_5) << std::left << layer.mus_ << "\n"
 		<< std::setw(FORMAT_30) << std::left << "ABSORPTION COEFFICIENT " << std::setw(FORMAT_5) << std::left << layer.mua_ << "\n"
@@ -128,11 +124,11 @@ void Logger::create_RenderFile(const mcml::MCMLParser& parser, output& values, c
  */
 int Logger::get_longest_number(const std::vector<std::vector<double>>& numbers) const
 {
-	auto max = 0;
+	std::size_t max = 0;
 	std::ostringstream strs;
-	for (auto i = 0; i < numbers.size(); i++)
+	for (std::size_t i = 0; i < numbers.size(); i++)
 	{
-		for (auto j = 0; j < numbers[0].size(); j++)
+		for (std::size_t j = 0; j < numbers[0].size(); j++)
 		{
 			strs.str("");
 			strs << numbers[i][j];

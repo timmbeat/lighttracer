@@ -1,16 +1,79 @@
 #include "stdafx.h"
 #include "propagation.h"
-#include "config.h"
-#include <fstream>
-#include <random>
-#include <iostream>
 #include "mcml_parser.h"
 #include "constants.h"
 #include <functional>
-#include <iomanip>
+#include "output.h"
 
-struct renderoptions render;
-//triple checkt
+void propagation::update_direction(photonstruct* photon, material const* mat)
+{
+	auto const angles = calculate_scattering(mat->matproperties->anisotropy);
+	//auto const angles = calculate_scattering();
+	auto const sint = sqrt(1 - angles.x * angles.x);
+	auto const cosp = cos(angles.y);
+	double sinp;
+	auto const ux = photon->direction.x;
+	auto const uy = photon->direction.y;
+	auto const uz = photon->direction.z;
+	if (angles.y < slabProfiles::pi<double>())
+	{
+		sinp = sqrt(1.0 - cosp * cosp);
+	}
+	else
+	{
+		sinp = -sqrt(1.0 - cosp * cosp);
+	}
+
+	if (fabs(photon->direction.z) > slabProfiles::cos_1<double>())
+	{
+		photon->direction.x = sint * cosp;
+		photon->direction.y = sint * sinp;
+		photon->direction.z = glm::sign(uz)*angles.x;
+	}
+	else
+	{
+		auto const temp = sqrt(1.0 - uz * uz);
+		photon->direction.x = sint * (ux*uz*cosp - uy * sinp) / temp + ux * angles.x;
+
+		photon->direction.y = sint * (uy*uz*cosp + ux * sinp) / temp + uy * angles.x;
+
+		photon->direction.z = -sint * cosp*temp + uz * angles.x;
+	}
+}
+
+glm::dvec2 propagation::calculate_scattering(double const anisotropy)
+{
+	auto const g = anisotropy;
+	double scattering;
+	if (g == 0.0)
+	{
+
+		scattering = 2 * random() - 1;
+	}
+	else
+	{
+		auto const temp = (1 - g * g) / (1 - g + 2 * g * random());
+		scattering = (1 + g * g - temp * temp) / (2 * g);
+	}
+
+	auto const azimuthal = 2 * slabProfiles::pi<double>() * random();
+
+	return glm::dvec2(scattering, azimuthal);
+}
+
+double propagation::sampleClassicalDistribution(double const mu_t)
+{
+	double ran;
+	do
+	{
+		ran = random();
+
+	}
+	while (ran <= 0.0);
+	auto const ret = -log(ran) / (mu_t);
+
+	return ret;
+}
 
 void propagation::cal_absorption(photonstruct * photon, material const * mat_) const
 {
@@ -47,7 +110,6 @@ void propagation::roulette(photonstruct  * photon, material const * mat_) const
 
 bool propagation::is_hit(photonstruct * photon, material const * mat_)
 {
-	//TODO: Test for both sampling sampling_scheme
 	
 	if(photon->sleft == 0.0)
 	{
@@ -74,6 +136,11 @@ bool propagation::is_hit(photonstruct * photon, material const * mat_)
 	}
 
 	return false;
+}
+
+double propagation::classical_path_distribution(double mu_t, double stepsize)
+{
+	return mu_t * exp(-mu_t * stepsize);
 }
 
 void propagation::trace(photonstruct * photon, output * out, material  const * mat_)
@@ -124,7 +191,10 @@ void propagation::trace(photonstruct * photon, output * out, material  const * m
 	}
 
 }
-
+/*
+ * Maybe Remove this. 
+ * This was intended for Camera and Light implementations
+ */
 int propagation::RayTriangle(glm::dvec3 &Point, glm::dvec3 &Vector, std::vector<glm::dvec3> &Plane)
 {
 	auto const a = Plane[0];
@@ -162,6 +232,11 @@ int propagation::RayTriangle(glm::dvec3 &Point, glm::dvec3 &Vector, std::vector<
 	
 }
 
+double propagation::getThreshould() const
+{
+	return threshould_weight_;
+}
+
 double propagation::fresnel(double const uz, material const * mat_) const 
 {
 	//Because Vaccum has a refractive index of 1.0
@@ -175,7 +250,6 @@ double propagation::fresnel(double const uz, material const * mat_) const
 		r = (mat_->matproperties->refrac-1) / (mat_->matproperties->refrac+1);
 		r *= r;
 	}
-	//Insert Constant here
 	else if(uz < slabProfiles::cos90_d<double>())
 	{
 		r = 1.0;
@@ -184,9 +258,6 @@ double propagation::fresnel(double const uz, material const * mat_) const
 	{
 		auto const sa1 = sqrt(1 - uz * uz);
 		auto const sa2 = mat_->matproperties->refrac * sa1;
-		/*
-		 * OLD ONE: auto const sa2 = uz * sa1..
-		 */
 		if (sa2 >= 1.0)
 		{
 			r = 1.0;
@@ -209,14 +280,16 @@ double propagation::fresnel(double const uz, material const * mat_) const
 	return r;
 }
 
+/*
+ * Write into the Buckets 
+ * 
+ */
 void propagation::update_arr_bucket(photonstruct const * photon, output * out_)
 {
-	//auto ir = tan(photon->wz_new) * sqrt(photon->position.x * photon->position.x + photon->position.y * photon->position.y);
 	auto ir = static_cast<int>(sqrt(photon->position.x * photon->position.x + photon->position.y * photon->position.y)
 							   / out_->delr);
 	if (ir > out_->bins_r - 1) ir = out_->bins_r - 1;
 
-	//auto ia = static_cast<int>(acos(-photon.direction.z) / (2 * m_pi*(ir + 0.5)*(out_.delr * out_.delr)));
 	auto ia = static_cast<int>((acos(-photon->direction.z) / out_->dela));
 	if (ia > out_->bins_a - 1)
 	{
