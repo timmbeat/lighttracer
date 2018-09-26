@@ -296,3 +296,5 @@ __pycache__/
 /lighttracer/glm/detail
 /lighttracer/glm/common.hpp
 /lighttracer/glm/CMakeLists.txt
+/lighttracer/lighttracer/own_examples/out-*.csv
+/lighttracer/lighttracer/own_examples/out-*.txt

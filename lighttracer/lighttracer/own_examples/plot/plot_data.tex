@@ -13,15 +13,24 @@
     every x label/.append style={yshift=.2em},
     every y label/.append style={xshift=.2em}}
 
+
+
+
+
+\newcommand{\plotfilepath}{"../out-abs75-scat83-anis0.89-phot100000.csv"}
+
 \begin{document}
 \begin{tikzpicture}
 	\begin{semilogyaxis}[width=0.95\linewidth, height=5cm, xmin=0, xmax=100,
 			xlabel={$r$},
 			ylabel={$\log\left(R_d\left(r\right)\right)$}]
-		\addplot[red] table[skip first n=0,mark=none,x index=2,y index=1]{"../out20-100-0.3.csv"};
-		\addplot[green] table[skip first n=0,mark=none,x index=2,y index=0]{"../out20-100-0.3.csv"};
+		\addplot[red] table[skip first n=0,mark=none,x index=2,y index=1]{\plotfilepath};
+		\addplot[green] table[skip first n=0,mark=none,x index=2,y index=0]{\plotfilepath};
 	\end{semilogyaxis}
 \end{tikzpicture}
+
+
+
 %\begin{tikzpicture}
 %	\begin{semilogyaxis}[width=0.95\linewidth, height=5cm, xmin=0, xmax=100,
 %			xlabel={$r$},
@@ -38,10 +47,5 @@
 %		\addplot[green] table[skip first n=0,mark=none,x index=2,y index=0]{./%manyplots.csv};
 %	\end{semilogyaxis}
 %\end{tikzpicture}
-
-
-
-
-$\Delta w = \frac{w\mu_a}{\mu_t}$
 
 \end{document}

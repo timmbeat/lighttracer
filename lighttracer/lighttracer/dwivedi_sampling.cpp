@@ -107,8 +107,8 @@ void dwivedi_sampling::run(double const mua, double const mus, double const anis
 	dwivedi.join();
 	std::stringstream filename;
 	std::stringstream filename_2;
-	filename << "own_examples" << "/"<< "out" << mua << "-" << mus << "-" << anisotropy << ".csv";
-	filename_2 << "own_examples" << "/" << "out" << mua << "-" << mus << "-" << anisotropy << ".txt";
+	filename << "own_examples" << "/"<< "out-" << "abs" << mua << "-" << "scat" << mus << "-" << "anis" << anisotropy << "-" << "phot" << photons << ".csv";
+	filename_2 << "own_examples" << "/" << "out-" << "abs" << mua << "-" << "scat" << mus << "-" << "anis" << anisotropy << "-" << "phot" << photons << ".txt";
 
 	log.create_PlotFile(out_clas, out, filename.str(), material1);
 	log.create_RenderFile(out_clas, out, filename_2.str(), material1);
