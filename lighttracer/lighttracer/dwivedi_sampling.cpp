@@ -34,16 +34,11 @@ void dwivedi_sampling::run(const std::string mcml_path)
 	auto const layer_mcml = mc.GetLayers();
 	auto const layer_0 = layer_mcml[0];
 	Logger log{};
-	classic_sampling clas{};
 
 	//Create layer and Material, these are the rendering options
 	layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
 	const material material1(mc.get_numphotons(), getThreshould(), 0.1, &lay);
 	output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
-
-
-	//this->cprobability = pc;
-	out = output(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
 	for (auto i = 0; i < material1.num_photons; i++)
 	{
 		photonstruct photon(1 - lay.reflec, false);
@@ -59,11 +54,66 @@ void dwivedi_sampling::run(const std::string mcml_path)
 	}
 
 
-	log.create_PlotFile(mc, out, "plot/dwivedi_output.csv", material1);
-	log.create_RenderFile(mc, out, "plot/dwivedi_logfile.txt", material1);
+	log.create_PlotFile(mc, out, "mcml_examples/plot/dwivedi_output.csv", material1);
+	log.create_RenderFile(mc, out, "mcml_examples/plot/dwivedi_logfile.txt", material1);
 
 }
+void dwivedi_sampling::run(double const mua, double const mus, double const anisotropy, std::size_t const photons, std::size_t const numr,
+						   double const delr)
+{
+	Logger log{};
+	classic_sampling clas{};
+	layer lay(1.0, mua, mus, anisotropy, getv0(mus / (mua + mus)));
+	const material material1(photons, getThreshould(), 0.1, &lay);
+	output out(numr, 1, delr, 1);
+	output out_clas(numr, 1, delr, 1);
 
+
+	std::thread classical([&material1, &lay, &clas, &out_clas]()
+	{
+		for (auto i = 0; i < material1.num_photons; i++)
+		{
+			photonstruct photon_clas(1 - lay.reflec, false);
+
+			while (!photon_clas.dead)
+			{
+				clas.trace(&photon_clas, &out_clas, &material1);
+				if (photon_clas.weight < material1.wth && !photon_clas.dead)
+				{
+					clas.roulette(&photon_clas, &material1);
+				}
+			}
+		}
+	});
+
+	std::thread dwivedi([&material1, &lay, this, &out]()
+	{
+		for (auto i = 0; i < material1.num_photons; i++)
+		{
+			photonstruct photon(1 - lay.reflec, false);
+
+			while (!photon.dead)
+			{
+				trace(&photon, &out, &material1);
+				if (photon.weight < material1.wth && !photon.dead)
+				{
+					roulette(&photon, &material1);
+				}
+			}
+		}
+	});
+
+	classical.join();
+	dwivedi.join();
+	std::stringstream filename;
+	std::stringstream filename_2;
+	filename << "own_examples" << "/"<< "out" << mua << "-" << mus << "-" << anisotropy << ".csv";
+	filename_2 << "own_examples" << "/" << "out" << mua << "-" << mus << "-" << anisotropy << ".txt";
+
+	log.create_PlotFile(out_clas, out, filename.str(), material1);
+	log.create_RenderFile(out_clas, out, filename_2.str(), material1);
+
+}
 
 /* 
  * This function will calculate the stepsize for the next move in the tissue. 
@@ -74,13 +124,11 @@ double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat
 	auto dwistepsize = 0.0;
 	if(random() > mat->cpropability)
 	{
-		//std::cout << "lol";
 		dwistepsize = sampleClassicalDistribution(mat->matproperties->mu_t);
 	}
 
 	else
 	{
-
 		dwistepsize = (-log(1 - random())) /
 			((1 - photon->wz_old /
 			  mat->matproperties->v0)*
@@ -95,6 +143,8 @@ double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat
 
 	return dwistepsize;
 }
+
+
 
 /*
  * This function will get the right eigenvalue for dwivedi sampling

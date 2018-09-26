@@ -10,8 +10,9 @@ class Logger
 	Logger();
 	~Logger();
 	void create_PlotFile(const mcml::MCMLParser &parser, output &values, const std::string &plotfile, const material &mat) const;
+	void create_PlotFile(output &values_1, output &values_2, const std::string &plotfile, const material &mat) const;
 	void create_RenderFile(const mcml::MCMLParser &parser, output &values, const std::string &plotfile, const material &mat) const;
-
+	void create_RenderFile(output &values_1, output &values_2, const std::string &plotfile, const material &mat) const;
 
 
 	private:
