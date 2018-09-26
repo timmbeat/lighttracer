@@ -19,5 +19,5 @@ int main()
 */
 	dwivedi_sampling dwivedi{};
 	//dwivedi.run("mcml_examples/example_10.txt");
-	dwivedi.run(75, 83, 0.89, 100000);
+	dwivedi.run(20, 200, 0.99, 100000);
 }

@@ -14,7 +14,6 @@
 #include <thread>
 #include "classic_sampling.h"
 #include "output.h"
-#include <iostream>
 struct dviwedi dwi;
 
 /*

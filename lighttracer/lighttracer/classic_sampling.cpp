@@ -1,9 +1,7 @@
 #include "stdafx.h"
 #include "classic_sampling.h"
-#include <random>
 #include "constants.h"
 #include "mcml_parser.h"
-#include "config.h"
 #include "Logger.h"
 
 classic_sampling::classic_sampling()
