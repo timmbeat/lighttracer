@@ -61,7 +61,7 @@ glm::dvec2 propagation::calculate_scattering(double const anisotropy)
 	return glm::dvec2(scattering, azimuthal);
 }
 
-double propagation::sampleClassicalDistribution(double const mu_t)
+double propagation::sample_classical_distribution(double const mu_t)
 {
 	double ran;
 	do
@@ -75,9 +75,9 @@ double propagation::sampleClassicalDistribution(double const mu_t)
 	return ret;
 }
 
-void propagation::cal_absorption(photonstruct * photon, material const * mat_) const
+void propagation::cal_absorption(photonstruct * photon, material const * mat) const
 {
-	auto const tmp = photon->weight * mat_->matproperties->absorption / (mat_->matproperties->absorption + mat_->matproperties->scattering);
+	auto const tmp = photon->weight * mat->matproperties->absorption / (mat->matproperties->absorption + mat->matproperties->scattering);
 	
 	photon->weight -= tmp;
 }
@@ -90,15 +90,15 @@ void propagation::move(photonstruct * photon)
 	photon->position.z = photon->position.z + photon->direction.z*photon->step;
 }
 
-void propagation::roulette(photonstruct  * photon, material const * mat_) const
+void propagation::roulette(photonstruct  * photon, material const * mat) const
 {
 	if(photon->weight == 0.0)
 	{
 		photon->dead = true;
 	}
-	else if (random() < mat_->rusroul)
+	else if (random() < mat->rusroul)
 	{
-		photon->weight /= mat_->rusroul;
+		photon->weight /= mat->rusroul;
 	}
 	else
 	{
@@ -108,16 +108,16 @@ void propagation::roulette(photonstruct  * photon, material const * mat_) const
 
 
 
-bool propagation::is_hit(photonstruct * photon, material const * mat_)
+bool propagation::is_hit(photonstruct * photon, material const * mat)
 {
 	
 	if(photon->sleft == 0.0)
 	{
-		photon->step = cal_stepsize(photon, mat_);
+		photon->step = cal_stepsize(photon, mat);
 	}
 	else
 	{
-		photon->step = photon->sleft / (mat_->matproperties->absorption + mat_->matproperties->scattering);
+		photon->step = photon->sleft / (mat->matproperties->absorption + mat->matproperties->scattering);
 		photon->sleft = 0.0;
 	}
 
@@ -128,7 +128,7 @@ bool propagation::is_hit(photonstruct * photon, material const * mat_)
 		//No check for lower boundery, because there is none
 		if (s1 < photon->step && photon->direction.z != 0.0)
 		{
-			photon->sleft = (photon->step - s1)*(mat_->matproperties->absorption + mat_->matproperties->scattering);
+			photon->sleft = (photon->step - s1)*(mat->matproperties->absorption + mat->matproperties->scattering);
 			photon->step = s1;
 
 			return true;
@@ -138,15 +138,15 @@ bool propagation::is_hit(photonstruct * photon, material const * mat_)
 	return false;
 }
 
-double propagation::classical_path_distribution(double mu_t, double stepsize)
+double propagation::classical_path_distribution(double const mu_t, double const stepsize) const
 {
 	return mu_t * exp(-mu_t * stepsize);
 }
 
-void propagation::trace(photonstruct * photon, output * out, material  const * mat_)
+void propagation::trace(photonstruct * photon, output * out, material  const * mat)
 {
 
-	if (is_hit(photon, mat_))
+	if (is_hit(photon, mat))
 	{
 
 		move(photon);
@@ -157,7 +157,7 @@ void propagation::trace(photonstruct * photon, output * out, material  const * m
 		{
 			r = 1.0;
 		}
-		else r = fresnel(-uz, mat_);
+		else r = fresnel(-uz, mat);
 
 		if (random() <= r)
 		{
@@ -168,7 +168,7 @@ void propagation::trace(photonstruct * photon, output * out, material  const * m
 			update_arr_bucket(photon, out);
 			//If photon is out of the tissue
 			/*auto Tri = std::vector<glm::dvec3>{ glm::dvec3(-1.0, -1.0, -2.0) , glm::dvec3(1.0,-1.0, -2.0), glm::dvec3(0.0, 1.0, -2.0) };
-			if(RayTriangle(photon->position, photon->direction, Tri) == 1)
+			if(ray_triangle(photon->position, photon->direction, Tri) == 1)
 			{
 				
 				out->kam_counter++;
@@ -186,8 +186,8 @@ void propagation::trace(photonstruct * photon, output * out, material  const * m
 	else
 	{
 		move(photon);
-		cal_absorption(photon, mat_);
-		update_direction(photon, mat_);
+		cal_absorption(photon, mat);
+		update_direction(photon, mat);
 	}
 
 }
@@ -195,36 +195,36 @@ void propagation::trace(photonstruct * photon, output * out, material  const * m
  * Maybe Remove this. 
  * This was intended for Camera and Light implementations
  */
-int propagation::RayTriangle(glm::dvec3 &Point, glm::dvec3 &Vector, std::vector<glm::dvec3> &Plane)
+int propagation::ray_triangle(glm::dvec3 &point, glm::dvec3 &vector, std::vector<glm::dvec3> &plane)
 {
-	auto const a = Plane[0];
-	auto const b = Plane[1];
-	auto const c = Plane[2];
+	auto const a = plane[0];
+	auto const b = plane[1];
+	auto const c = plane[2];
 		  
 	auto const xamxb = a.x - b.x; //---a---
 	auto const xamxc = a.x - c.x; //---d---
-	auto const xamxe = a.x - Point.x; //---j---
+	auto const xamxe = a.x - point.x; //---j---
 		 
-	auto const yamye = a.y - Point.y; //--k--
+	auto const yamye = a.y - point.y; //--k--
 	auto const yamyc = a.y - c.y; //--e--
 	auto const yamyb = a.y - b.y; //--b--
 		 
-	auto const zamze = a.z - Point.z; //--l--
+	auto const zamze = a.z - point.z; //--l--
 	auto const zamzc = a.z - c.z; //--f--
 	auto const zamzb = a.z - b.z; //--c--
 
-	auto const M = xamxb * (yamyc*Vector.z - Vector.y*zamzc) + yamyb * (Vector.x*zamzc - xamxc * Vector.z) + zamzb * (xamxc*Vector.y - yamyc * Vector.x);
+	auto const M = xamxb * (yamyc*vector.z - vector.y*zamzc) + yamyb * (vector.x*zamzc - xamxc * vector.z) + zamzb * (xamxc*vector.y - yamyc * vector.x);
 
 
-	auto t = - (zamzc *(xamxb*yamye - xamxe * yamyb) + yamyc * (xamxe*zamzb - xamxb * zamze) + xamxc * (yamyb*zamze - yamye * zamzb)) / M;
+	auto const t = - (zamzc *(xamxb*yamye - xamxe * yamyb) + yamyc * (xamxe*zamzb - xamxb * zamze) + xamxc * (yamyb*zamze - yamye * zamzb)) / M;
 
 	if (t < 0) return 0;
 	
-	auto gamma = (Vector.z *(xamxb*yamye - xamxe * yamyb) + Vector.y*(xamxe*zamzb - xamxb * zamze) + Vector.x*(yamyb*zamze - yamye * zamzb)) / M;
+	auto const gamma = (vector.z *(xamxb*yamye - xamxe * yamyb) + vector.y*(xamxe*zamzb - xamxb * zamze) + vector.x*(yamyb*zamze - yamye * zamzb)) / M;
 
 	if (gamma < 0 || gamma > 1) return false;
 
-	auto beta = (xamxe*(yamyc*Vector.z - Vector.y*zamzc) + yamye * (Vector.x*zamzc - xamxc * Vector.z) + zamze * (xamxc*Vector.y - yamyc * Vector.x)) / M;
+	auto const beta = (xamxe*(yamyc*vector.z - vector.y*zamzc) + yamye * (vector.x*zamzc - xamxc * vector.z) + zamze * (xamxc*vector.y - yamyc * vector.x)) / M;
 
 	if (beta < 0 || beta > 1 - gamma) return false;
 
@@ -232,22 +232,22 @@ int propagation::RayTriangle(glm::dvec3 &Point, glm::dvec3 &Vector, std::vector<
 	
 }
 
-double propagation::getThreshould() const
+double propagation::get_threshould() const
 {
 	return threshould_weight_;
 }
 
-double propagation::fresnel(double const uz, material const * mat_) const 
+double propagation::fresnel(double const uz, material const * mat) const 
 {
 	//Because Vaccum has a refractive index of 1.0
 	double r;
-	if(mat_->matproperties->refrac == 1.0)
+	if(mat->matproperties->refrac == 1.0)
 	{
 		r = 0.0;
 	}
 	else if(uz > slabProfiles::cos_1<double>())
 	{
-		r = (mat_->matproperties->refrac-1) / (mat_->matproperties->refrac+1);
+		r = (mat->matproperties->refrac-1) / (mat->matproperties->refrac+1);
 		r *= r;
 	}
 	else if(uz < slabProfiles::cos90_d<double>())
@@ -257,7 +257,7 @@ double propagation::fresnel(double const uz, material const * mat_) const
 	else
 	{
 		auto const sa1 = sqrt(1 - uz * uz);
-		auto const sa2 = mat_->matproperties->refrac * sa1;
+		auto const sa2 = mat->matproperties->refrac * sa1;
 		if (sa2 >= 1.0)
 		{
 			r = 1.0;
@@ -284,18 +284,18 @@ double propagation::fresnel(double const uz, material const * mat_) const
  * Write into the Buckets 
  * 
  */
-void propagation::update_arr_bucket(photonstruct const * photon, output * out_)
+void propagation::update_arr_bucket(photonstruct const * photon, output * out)
 {
 	auto ir = static_cast<int>(sqrt(photon->position.x * photon->position.x + photon->position.y * photon->position.y)
-							   / out_->delr);
-	if (ir > out_->bins_r - 1) ir = out_->bins_r - 1;
+							   / out->delr);
+	if (ir > out->bins_r - 1) ir = out->bins_r - 1;
 
-	auto ia = static_cast<int>((acos(-photon->direction.z) / out_->dela));
-	if (ia > out_->bins_a - 1)
+	auto ia = static_cast<int>((acos(-photon->direction.z) / out->dela));
+	if (ia > out->bins_a - 1)
 	{
-		ia = out_->bins_a - 1;
+		ia = out->bins_a - 1;
 
 	}
-	out_->Rd_r[ir][ia] += photon->weight;
+	out->Rd_r[ir][ia] += photon->weight;
 
 }

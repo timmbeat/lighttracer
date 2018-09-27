@@ -36,7 +36,7 @@ void dwivedi_sampling::run(const std::string mcml_path)
 
 	//Create layer and Material, these are the rendering options
 	layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
-	const material material1(mc.get_numphotons(), getThreshould(), 0.1, &lay);
+	const material material1(mc.get_numphotons(), get_threshould(), 0.1, &lay);
 	output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
 	for (auto i = 0; i < material1.num_photons; i++)
 	{
@@ -63,7 +63,7 @@ void dwivedi_sampling::run(double const mua, double const mus, double const anis
 	Logger log{};
 	classic_sampling clas{};
 	layer lay(1.0, mua, mus, anisotropy, getv0(mus / (mua + mus)));
-	const material material1(photons, getThreshould(), 0.1, &lay);
+	const material material1(photons, get_threshould(), 0.1, &lay);
 	output out(numr, 1, delr, 1);
 	output out_clas(numr, 1, delr, 1);
 
@@ -123,7 +123,7 @@ double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat
 	auto dwistepsize = 0.0;
 	if(random() > mat->cpropability)
 	{
-		dwistepsize = sampleClassicalDistribution(mat->matproperties->mu_t);
+		dwistepsize = sample_classical_distribution(mat->matproperties->mu_t);
 	}
 
 	else
@@ -161,7 +161,6 @@ double dwivedi_sampling::getv0(double const   alpha)
  */
 void dwivedi_sampling::update_direction(photonstruct* photon, material const* mat)
 {
-	//auto const ran = 0.0;
 	if (random() > mat->cpropability)
 	{
 

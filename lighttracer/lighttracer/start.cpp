@@ -1,7 +1,5 @@
 #include "stdafx.h"
-#include "classic_sampling.h"
 #include "dwivedi_sampling.h"
-#include <iostream>
 
 /**
  * Created by Tim Mend.
@@ -19,5 +17,5 @@ int main()
 */
 	dwivedi_sampling dwivedi{};
 	//dwivedi.run("mcml_examples/example_10.txt");
-	dwivedi.run(20, 200, 0.99, 100000);
+	dwivedi.run(12, 110, 0.99, 200000);
 }
