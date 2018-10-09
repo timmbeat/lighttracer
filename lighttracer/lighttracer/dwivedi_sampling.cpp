@@ -14,6 +14,7 @@
 #include <thread>
 #include "classic_sampling.h"
 #include "output.h"
+#include <iostream>
 struct dviwedi dwi;
 
 /*
@@ -28,35 +29,108 @@ void dwivedi_sampling::run(const std::string mcml_path)
 
 
 
+
+
 	//Parsing the Result of mcml
 	auto mc = mcml::MCMLParser(mcml_path);
 	auto const layer_mcml = mc.GetLayers();
 	auto const layer_0 = layer_mcml[0];
 	Logger log{};
-
 	//Create layer and Material, these are the rendering options
 	layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
-	const material material1(mc.get_numphotons(), get_threshould(), 0.1, &lay);
-	output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
-	for (auto i = 0; i < material1.num_photons; i++)
+
+
+	auto const inc = 5000;
+	for (auto i = inc; i <= mc.get_numphotons(); i += inc)
 	{
-		photonstruct photon(1 - lay.reflec, false);
-		
-			while(!photon.dead)
+
+
+		const material material1(i, get_threshould(), 0.1, &lay);
+		output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
+		for (auto i = 0; i < material1.num_photons; i++)
+		{
+			photonstruct photon(1 - lay.reflec, false);
+
+			while (!photon.dead)
 			{
 				trace(&photon, &out, &material1);
-				if(photon.weight < material1.wth && !photon.dead)
+				if (photon.weight < material1.wth && !photon.dead)
 				{
 					roulette(&photon, &material1);
 				}
 			}
+		}
+
+		log.create_RenderFolder(mc, out, material1);
+
 	}
-
-
-	log.create_PlotFile(mc, out, "mcml_examples/plot/dwivedi_output.csv", material1);
-	log.create_RenderFile(mc, out, "mcml_examples/plot/dwivedi_logfile.txt", material1);
+		//log.create_PlotFile(mc, out, "mcml_examples/plot/dwivedi_output.csv", material1);
+	//log.create_RenderFile(mc, out, "mcml_examples/plot/dwivedi_logfile.txt", material1);
 
 }
+
+
+void dwivedi_sampling::data_run()
+{
+	Logger log{};
+	classic_sampling sampling{};
+
+	for(auto k = 0; k < dwi.amount_anisotropy; k++)
+	{
+		for(auto l = 0; l < dwi.amount_abs_scatter; l++)
+		{
+
+			auto const mcml_path = log.create_MCMLFile(dwi.abs_scatter_values[l], dwi.abs_scatter_values[dwi.amount_abs_scatter -1 -l], dwi.anisotropy[k], 100000);
+			auto mc = mcml::MCMLParser(mcml_path);
+			auto const layer_mcml = mc.GetLayers();
+			auto const layer_0 = layer_mcml[0];
+
+			layer lay(layer_0.eta_, layer_0.mua_, layer_0.mus_, layer_0.g_, getv0(layer_0.mus_ / (layer_0.mua_ + layer_0.mus_)));
+
+
+			for (auto i = 0; i < 6; i++)
+			{
+
+
+				const material material1(dwi.photons[i], get_threshould(), 0.1, &lay);
+				output out(mc.get_numr(), mc.get_numa(), mc.get_dr_(), 1);
+				for (auto j = 0; j < material1.num_photons; j++)
+				{
+					photonstruct photon(1 - lay.reflec, false);
+					while (!photon.dead)
+					{
+						if(material1.cpropability < random())
+						{
+							trace(&photon, &out, &material1);
+
+						}
+						else
+						{
+							sampling.trace(&photon, &out, &material1);
+						}
+						if (photon.weight < material1.wth && !photon.dead)
+						{
+							roulette(&photon, &material1);
+						}
+					}
+				}
+
+				log.create_RenderFolder(mc, out, material1);
+
+			}
+			
+		}
+	}
+
+	
+}
+
+
+
+
+
+
+
 void dwivedi_sampling::run(double const mua, double const mus, double const anisotropy, std::size_t const photons, std::size_t const numr,
 						   double const delr)
 {
@@ -120,8 +194,9 @@ void dwivedi_sampling::run(double const mua, double const mus, double const anis
  */
 double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat)
 {
+	//TEST
 	auto dwistepsize = 0.0;
-	if(random() > mat->cpropability)
+	if(!(random() > mat->cpropability))
 	{
 		dwistepsize = sample_classical_distribution(mat->matproperties->mu_t);
 	}
@@ -148,7 +223,7 @@ double dwivedi_sampling::cal_stepsize(photonstruct* photon, material const * mat
 /*
  * This function will get the right eigenvalue for dwivedi sampling
  */
-double dwivedi_sampling::getv0(double const   alpha)
+double dwivedi_sampling::getv0(double const alpha)
 {
 	return alpha > 0.56 ? dwi.get_highv0(alpha) : dwi.get_lowv0(alpha);
 }
@@ -161,6 +236,7 @@ double dwivedi_sampling::getv0(double const   alpha)
  */
 void dwivedi_sampling::update_direction(photonstruct* photon, material const* mat)
 {
+	//TEST
 	if (random() > mat->cpropability)
 	{
 
@@ -204,7 +280,7 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 		auto const hg = directional_distribution_hg(mat->matproperties->anisotropy, acos(cos_theta));
 		auto const dwi = directional_distribution_dwi(mat->matproperties->v0, wz);
 
-
+		photon->alreadymoved = true;
 		photon->weight = photon->weight * hg / dwi;
 	}
 
@@ -241,6 +317,7 @@ double dwivedi_sampling::directional_distribution_hg(double const g, double cons
 void dwivedi_sampling::cal_absorption(photonstruct* photon, material const* mat) const
 {
 	auto const tmp = photon->weight * mat->matproperties->absorption / (mat->matproperties->mu_t);
+
 	/*auto path_mean = 1 / ((1 - photon->wz_old / mat->matproperties->v0)*mat->matproperties->mu_t);
 	auto const tmp = photon->weight *mat->matproperties->absorption  * path_mean;
 	*/
@@ -254,6 +331,8 @@ double dwivedi_sampling::dwivedi_path_distribution(double const wz, double const
 {
 	return (1 - wz / v0)*mu_t*exp(-(1 - wz / v0)*mu_t*t);
 }
+
+
 
 
 

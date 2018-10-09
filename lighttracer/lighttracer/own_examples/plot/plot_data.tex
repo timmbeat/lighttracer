@@ -14,13 +14,14 @@
     every y label/.append style={xshift=.2em}}
 
 
-\newcommand{\absorption}{10}
-\newcommand{\scattering}{110}
-\newcommand{\anisotropy}{0.99}
-\newcommand{\photons}{200000}
+\newcommand{\absorption}{1}
+\newcommand{\scattering}{10}
+\newcommand{\anisotropy}{0.9}
+\newcommand{\photons}{10000000}
 
 
-\newcommand{\plotfilepath}{"../out-abs\absorption -scat\scattering -anis0.99-phot\photons .csv"}
+\newcommand{\plotfilepath}{"../out-abs\absorption -scat\scattering -anis\anisotropy -phot\photons .csv"}
+
 
 \begin{document}
 \begin{tikzpicture}
@@ -30,6 +31,10 @@
 		\addplot[red] table[skip first n=0,mark=none,x index=2,y index=1]{\plotfilepath};
 		\addplot[green] table[skip first n=0,mark=none,x index=2,y index=0]{\plotfilepath};
 	\end{semilogyaxis}
+		\node[font=\tiny] (c) at (11,1.75) {Absorption: \absorption};
+		\node[font=\tiny] (c) at (11,2) {Scattering: \scattering};
+		\node[font=\tiny] (c) at (11,2.25) {Anisotropy: \anisotropy};
+		\node[font=\tiny] (c) at (11,2.5) {Photons: \photons};
 \end{tikzpicture}
 
 

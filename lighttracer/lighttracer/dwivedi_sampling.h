@@ -30,7 +30,7 @@ class dwivedi_sampling : public propagation
 	 * @return : returns nothing
 	 */
 	void run(double mua, double mus, double anisotropy, std::size_t photons, std::size_t numr = 100, double delr = 0.001);
-
+	void data_run();
 
 
 	double cal_stepsize(photonstruct* photon, material const* mat) override;
@@ -44,6 +44,10 @@ class dwivedi_sampling : public propagation
 	double directional_distribution_hg(double const g, double const theta) const;
 	void cal_absorption(photonstruct * photon, material const * mat) const override;
 	double dwivedi_path_distribution(double wz, double v0, double mu_t, double t) const;
+
+
+	///////DATA EXTRACTION
+
 	
 };
 

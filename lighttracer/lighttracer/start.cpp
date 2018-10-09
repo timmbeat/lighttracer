@@ -16,6 +16,7 @@ int main()
 	classic.run("mcml_examples/example_2.txt");
 */
 	dwivedi_sampling dwivedi{};
-	//dwivedi.run("mcml_examples/example_10.txt");
-	dwivedi.run(12, 110, 0.99, 200000);
+	//dwivedi.run("mcml_examples/Research/Skin.txt");
+	//dwivedi.run(1.0, 10, 0.90, 10000000);
+	dwivedi.data_run();
 }

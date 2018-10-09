@@ -4,6 +4,7 @@
 #include "constants.h"
 #include <functional>
 #include "output.h"
+#include <iostream>
 
 void propagation::update_direction(photonstruct* photon, material const* mat)
 {
@@ -77,8 +78,7 @@ double propagation::sample_classical_distribution(double const mu_t)
 
 void propagation::cal_absorption(photonstruct * photon, material const * mat) const
 {
-	auto const tmp = photon->weight * mat->matproperties->absorption / (mat->matproperties->absorption + mat->matproperties->scattering);
-	
+	auto const tmp = photon->weight * mat->matproperties->absorption / (mat->matproperties->absorption + mat->matproperties->scattering); 
 	photon->weight -= tmp;
 }
 
