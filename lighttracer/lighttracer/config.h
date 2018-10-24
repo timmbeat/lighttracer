@@ -46,7 +46,9 @@ struct dviwedi
 		0.9
 	};
 
-	int photons[6]{
+
+	std::size_t static const amount_photons = 6;
+	int photons[amount_photons]{
 		500,
 		2000,
 		5000,

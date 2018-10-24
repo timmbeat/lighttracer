@@ -14,7 +14,7 @@ class Logger
 	void create_RenderFile(const mcml::MCMLParser &parser, output &values, const std::string &plotfile, const material &mat) const;
 	void create_RenderFile(output &values_1, output &values_2, const std::string &plotfile, const material &mat) const;
 	void create_RenderFolder(const mcml::MCMLParser &parser, output &values, const material &mat)const;
-	void create_TeXFile(std::string name, std::string up_name) const;
+	void create_TeXFile(std::string name, std::string up_name, const material &mat) const;
 	void CreateFolder(std::string name) const;
 	std::string create_MCMLFile(double scattering, double absorption, double anisotropy, std::size_t num_photons);
 

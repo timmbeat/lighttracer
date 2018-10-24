@@ -7,7 +7,7 @@
 struct photonstruct
 {
 	photonstruct(double const weight, bool const dead) :
-		position(glm::dvec3(0, 0, 0)), direction(glm::dvec3(0, 0, 1)), weight(weight), dead(dead), sleft(0), alreadymoved(false)
+		position(glm::dvec3(0, 0, 0)), direction(glm::dvec3(0, 0, 1)), weight(weight), dead(dead), sleft(0), alreadymoved(true)
 	{
 	}
 	glm::dvec3 position;
@@ -20,7 +20,6 @@ struct photonstruct
 	//For now unnessary..
 	double step = 0.0;
 	double sleft = 0.0;
-	double wz_new = -1.0;
 	double wz_old = -1.0;
 	double directiont = 0.0;
 	std::string to_string() const

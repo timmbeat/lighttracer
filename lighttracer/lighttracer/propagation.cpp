@@ -117,6 +117,7 @@ bool propagation::is_hit(photonstruct * photon, material const * mat)
 	}
 	else
 	{
+		//TODO: REMOVE---THIS IS ONLY FOR MULTILAYER
 		photon->step = photon->sleft / (mat->matproperties->absorption + mat->matproperties->scattering);
 		photon->sleft = 0.0;
 	}
@@ -128,6 +129,7 @@ bool propagation::is_hit(photonstruct * photon, material const * mat)
 		//No check for lower boundery, because there is none
 		if (s1 < photon->step && photon->direction.z != 0.0)
 		{
+			//TODO: REMOVE---THIS IS ONLY FOR MULTILAYER
 			photon->sleft = (photon->step - s1)*(mat->matproperties->absorption + mat->matproperties->scattering);
 			photon->step = s1;
 

@@ -14,46 +14,81 @@
     every y label/.append style={xshift=.2em}}
 
 
-\newcommand{\absorption}{1}
-\newcommand{\scattering}{10}
-\newcommand{\anisotropy}{0.9}
-\newcommand{\photons}{10000000}
+\newcommand{\absorption}{0.01}
+\newcommand{\scattering}{100}
+\newcommand{\anisotropy}{0}
+\newcommand{\photons}{20}
 
 
 \newcommand{\plotfilepath}{"../out-abs\absorption -scat\scattering -anis\anisotropy -phot\photons .csv"}
+\newcommand{\plotfilepathzwo}{"../out-abs\absorption -scat\scattering -anis\anisotropy -phot\photons .csv"}
+
+% argument #1: any options
+\newenvironment{customlegend}[1][]{%
+    \begingroup
+    % inits/clears the lists (which might be populated from previous
+    % axes):
+    \csname pgfplots@init@cleared@structures\endcsname
+    \pgfplotsset{#1}%
+}{%
+    % draws the legend:
+    \csname pgfplots@createlegend\endcsname
+    \endgroup
+}%
+
+\def\addlegendimage{\csname pgfplots@addlegendimage\endcsname}
+
+% definition to insert numbers
+\pgfkeys{/pgfplots/number in legend/.style={%
+        /pgfplots/legend image code/.code={%
+            \node at (0.295,-0.0225){#1};
+        },%
+    },
+}
 
 
 \begin{document}
 \begin{tikzpicture}
+	\begin{customlegend}[
+legend entries={ % <= in the following there are the entries
+mcml,
+dwivedi,
+},
+legend style={at={(9.5,3.2)},font=\tiny}] % <= to define position and font legend
+% the following are the "images" and numbers in the legend
+    \addlegendimage{sharp plot,draw=green}
+    \addlegendimage{sharp plot,draw=red}
+    %\addlegendimage{sharp plot,draw=red}
+    %\addlegendimage{sharp plot,draw=red, opacitiy=100}
+\end{customlegend}
 	\begin{semilogyaxis}[width=0.95\linewidth, height=5cm, xmin=0, xmax=100,
 			xlabel={$r$},
-			ylabel={$\log\left(R_d\left(r\right)\right)$}]
+			ylabel={$R_d\left(r\right)$}]
 		\addplot[red] table[skip first n=0,mark=none,x index=2,y index=1]{\plotfilepath};
 		\addplot[green] table[skip first n=0,mark=none,x index=2,y index=0]{\plotfilepath};
 	\end{semilogyaxis}
-		\node[font=\tiny] (c) at (11,1.75) {Absorption: \absorption};
-		\node[font=\tiny] (c) at (11,2) {Scattering: \scattering};
-		\node[font=\tiny] (c) at (11,2.25) {Anisotropy: \anisotropy};
-		\node[font=\tiny] (c) at (11,2.5) {Photons: \photons};
 \end{tikzpicture}
 
+\begin{tikzpicture}
+	\begin{customlegend}[
+legend entries={ % <= in the following there are the entries
+mcml,
+dwivedi,
+},
+legend style={at={(9.5,3.2)},font=\tiny}] % <= to define position and font legend
+% the following are the "images" and numbers in the legend
+    \addlegendimage{sharp plot,draw=green}
+    \addlegendimage{sharp plot,draw=red}
+    %\addlegendimage{sharp plot,draw=red}
+    %\addlegendimage{sharp plot,draw=red, opacitiy=100}
+\end{customlegend}
+	\begin{semilogyaxis}[width=0.95\linewidth, height=5cm, xmin=0, xmax=100,
+			xlabel={$r$},
+			ylabel={$R_d\left(r\right)$}]
+		\addplot[red] table[skip first n=0,mark=none,x index=2,y index=1]{\plotfilepathzwo};
+		\addplot[green] table[skip first n=0,mark=none,x index=2,y index=0]{\plotfilepathzwo};
+	\end{semilogyaxis}
+\end{tikzpicture}
 
-
-%\begin{tikzpicture}
-%	\begin{semilogyaxis}[width=0.95\linewidth, height=5cm, xmin=0, xmax=100,
-%			xlabel={$r$},
-%			ylabel={$\log\left(R_d\left(r\right)\right)$}]
-%		\addplot[red] table[skip first n=0,mark=none,x index=2,y index=1]{./clas_output.csv};
-%		\addplot[green] table[skip first n=0,mark=none,x index=2,y index=0]{./clas_output.csv};
-%	\end{semilogyaxis}
-%\end{tikzpicture}
-%\begin{tikzpicture}
-%	\begin{semilogyaxis}[width=0.95\linewidth, height=5cm, xmin=0, xmax=100,
-%			xlabel={$r$},
-%			ylabel={$\log\left(R_d\left(r\right)\right)$}]
-%		\addplot[red] table[skip first n=0,mark=none,x index=2,y index=1]{./%manyplots.csv};
-%		\addplot[green] table[skip first n=0,mark=none,x index=2,y index=0]{./%manyplots.csv};
-%	\end{semilogyaxis}
-%\end{tikzpicture}
 
 \end{document}

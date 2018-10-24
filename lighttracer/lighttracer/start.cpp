@@ -11,12 +11,19 @@
 
 int main()
 {
-
-	/*classic_sampling classic{};
-	classic.run("mcml_examples/example_2.txt");
-*/
 	dwivedi_sampling dwivedi{};
-	//dwivedi.run("mcml_examples/Research/Skin.txt");
-	//dwivedi.run(1.0, 10, 0.90, 10000000);
-	dwivedi.data_run();
+
+	//Three different possibilites are aviable to start a dwivedi run.
+	//First: use a mcml output file	
+	dwivedi.run("mcml_examples/abs10sca0.1g0pho15000.txt");
+	
+	
+	
+	//Second: use your own valus
+	//dwivedi.run(0.01, 100, 0.0, 5000);
+
+
+
+	//Third: Specifiy some data in config.h and run it ===> This will take some time.
+	//dwivedi.data_run();
 }

@@ -298,7 +298,7 @@ void Logger::create_RenderFolder(const mcml::MCMLParser& parser, output& values,
 
 
 	ccout.close();
-	create_TeXFile(names[1], names[0]);
+	create_TeXFile(names[1], names[0], mat);
 
 
 	std::stringstream systemcall;
@@ -332,7 +332,7 @@ void Logger::clean(std::string file, std::string up_name) const
 /*
  * This Function will Create the TeXFile for creating the Plot
  */
-void Logger::create_TeXFile(std::string name, std::string up_name) const
+void Logger::create_TeXFile(std::string name, std::string up_name, const material &mat) const
 {
 	
 	std::stringstream locpath;
@@ -368,6 +368,10 @@ void Logger::create_TeXFile(std::string name, std::string up_name) const
 		  "			\\addplot[red] table[skip first n=0, mark=none,x index=2,y index=1]{\\plotfilepath};\n"
 		  "			\\addplot[green] table[skip first n=0, mark=none, x index=2, y index=0]{\\plotfilepath};\n"
 		  "		\\end{semilogyaxis}\n"
+		  "			\node[font = \tiny](c) at(11, 1.75){Absorption:" << mat.matproperties->absorption << "};\n"
+		  "			\node[font = \tiny](c) at(11, 2){Scattering:" << mat.matproperties->scattering << "};\n"
+	      "			\node[font = \tiny](c) at(11, 2.25){Anisotropy:" << mat.matproperties->anisotropy << "};\n"
+	      "			\node[font = \tiny](c) at(11, 2.5){Photons:" << mat.num_photons << "};\n"
 		  "\\end{tikzpicture}\n"
 		  "\\end{document}";
 
