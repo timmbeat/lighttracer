@@ -7,24 +7,11 @@
 #include <chrono>
 #include <iostream>
 #include <windows.h>
-namespace cond
-{
-	#ifdef UNICODE
-	typedef std::wstring String;
-	typedef std::wstringstream StringStream;
-	#define Str(s) L##s
-	#else
-	typedef std::string String;
-	typedef std::stringstream StringStream;
-	#define Str(s) s
-	#endif
-}
+
 Logger::Logger() = default;
 
 Logger::~Logger() = default;
 
-
-using namespace cond;
 void Logger::create_PlotFile(const mcml::MCMLParser& parser, output& values, const std::string& plotfile, const material &mat) const
 {
 
