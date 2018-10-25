@@ -7,12 +7,24 @@
 #include <chrono>
 #include <iostream>
 #include <windows.h>
-
-
+namespace cond
+{
+	#ifdef UNICODE
+	typedef std::wstring String;
+	typedef std::wstringstream StringStream;
+	#define Str(s) L##s
+	#else
+	typedef std::string String;
+	typedef std::stringstream StringStream;
+	#define Str(s) s
+	#endif
+}
 Logger::Logger() = default;
 
 Logger::~Logger() = default;
 
+
+using namespace cond;
 void Logger::create_PlotFile(const mcml::MCMLParser& parser, output& values, const std::string& plotfile, const material &mat) const
 {
 
@@ -382,9 +394,13 @@ void Logger::create_TeXFile(std::string name, std::string up_name, const materia
  */
 void Logger::CreateFolder(std::string name) const
 {
+	#ifdef UNICODE
 	if(!CreateDirectory(s2ws(name).c_str(), NULL)) return;
-
 	CreateDirectory(s2ws(name).c_str(), NULL);
+	#else
+	if (!CreateDirectory(name.c_str(), NULL)) return;
+	CreateDirectory(name.c_str(), NULL);
+	#endif
 }
 
 std::string Logger::create_MCMLFile(double scattering, double absorption, double anisotropy, std::size_t num_photons)
@@ -444,9 +460,9 @@ std::vector<std::string> Logger::create_name_structure(double scattering, double
 
 
 
-
-	CreateFolder(".\\Research");
 	CreateFolder(".\\mcml_examples");
+
+	CreateFolder(".\\mcml_examples\\Research");
 
 	up_name << "abs" << absorption << "-scat" << scattering << "-g" << anisotropy;
 	name << "pho" << num_photons << "-abs" << absorption << "-scat" << scattering << "-g" << anisotropy;
