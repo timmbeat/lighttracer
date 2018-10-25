@@ -1,6 +1,5 @@
 #pragma once
 
-#include <glm.hpp>
 
 struct layer
 {

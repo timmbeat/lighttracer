@@ -8,8 +8,8 @@
 #include "constants.h"
 #include "mcml_parser.h"
 #define GLM_ENABLE_EXPERIMENTAL
-#include <gtx/string_cast.hpp>
-#include "gtx/norm.hpp"
+#include "glm/gtx/string_cast.hpp"
+#include "glm/gtx/norm.hpp"
 #include "Logger.h"
 #include <thread>
 #include "classic_sampling.h"
