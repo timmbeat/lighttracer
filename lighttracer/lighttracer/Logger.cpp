@@ -7,8 +7,9 @@
 #include <chrono>
 #include <iostream>
 #include <windows.h>
-Logger::Logger() = default;
 
+
+Logger::Logger() = default;
 
 Logger::~Logger() = default;
 
@@ -32,9 +33,6 @@ void Logger::create_PlotFile(const mcml::MCMLParser& parser, output& values, con
 
 
 	auto counter = 0.0;
-
-
-
 
 	///////////////////
 	//Scaling/////////
@@ -447,6 +445,8 @@ std::vector<std::string> Logger::create_name_structure(double scattering, double
 
 
 
+	CreateFolder(".\\Research");
+	CreateFolder(".\\mcml_examples");
 
 	up_name << "abs" << absorption << "-scat" << scattering << "-g" << anisotropy;
 	name << "pho" << num_photons << "-abs" << absorption << "-scat" << scattering << "-g" << anisotropy;
