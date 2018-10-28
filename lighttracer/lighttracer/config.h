@@ -28,6 +28,10 @@ struct dviwedi
 		return static_cast<slabProfiles::Real>(1 / lowv0);
 	}
 
+
+	/*
+	 * Below are the parameters which are for the "data_run" function in dwivedi_sampling
+	 */
 	std::size_t static const amount_abs_scatter = 5;
 
 	double abs_scatter_values[amount_abs_scatter] = {

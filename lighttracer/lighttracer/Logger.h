@@ -4,6 +4,10 @@
 
 struct material;
 
+/*
+ * This class will write the TeXfile, logfile, .csv files etc. It also will create the 
+ * folderstructure for the different input parameters 
+ */
 class Logger
 {
 	public:

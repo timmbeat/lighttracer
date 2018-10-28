@@ -16,6 +16,4 @@ struct output
 	double sum;
 
 	bool sum_set = false;
-
-	int kam_counter = 0;
 };

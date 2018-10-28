@@ -1,6 +1,8 @@
 #pragma once
 
-
+/**
+ * This structure will hold all information about the material which the photons moves in
+ */
 struct layer
 {
 	layer(double const refrac, double const absorption, double const scattering, double const anisotropy, double const v0): 

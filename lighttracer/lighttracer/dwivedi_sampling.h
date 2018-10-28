@@ -45,9 +45,6 @@ class dwivedi_sampling : public propagation
 	void cal_absorption(photonstruct * photon, material const * mat) const override;
 	double dwivedi_path_distribution(double wz, double v0, double mu_t, double t) const;
 
-
-	///////DATA EXTRACTION
-
 	
 };
 
