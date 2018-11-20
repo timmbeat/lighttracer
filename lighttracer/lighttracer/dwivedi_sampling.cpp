@@ -290,7 +290,6 @@ void dwivedi_sampling::update_direction(photonstruct* photon, material const* ma
 		auto const hg = directional_distribution_hg(mat->matproperties->anisotropy, acos(cos_theta));
 		auto const dwi = directional_distribution_dwi(mat->matproperties->v0, wz);
 
-		photon->alreadymoved = true;
 		photon->weight = photon->weight * hg / dwi;
 	}
 
